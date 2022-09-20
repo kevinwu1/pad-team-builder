@@ -30,3 +30,7 @@ metals.sbt
 .idea
 .idea_modules
 /.worksheet/
+
+
+download_skill_data.json
+download_card_data.json
