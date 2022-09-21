@@ -1,11 +1,11 @@
 package model
 
-final case class CardDataJson(
+final case class Card(
     id: Long, // 0
     name: String, // 1
     att: Long,
     subattribute: Long, // 3
-    isEvoReversable: Long, // 4
+    isEvoReversable: Boolean, // 4
     type1: Long, // 5
     type2: Long, // 6
     starCount: Long, // 7
