@@ -1,0 +1,3 @@
+package model
+
+enum Attribute() {}
