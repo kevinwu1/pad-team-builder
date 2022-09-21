@@ -1,18 +1,21 @@
-import model.CardDataJson
+import model.JsonCardData
 import scala.io.Source
 import model.EnemySkillDataJson
 import play.api.libs.json._
+import model.Attribute
 
-object CardDataReader {
+object DataReader {
 
   def main(arg: Array[String]): Unit = {
     val cardDataFile = "download_card_data.json"
     val allCardData = readCardData(cardDataFile)
+    println(Attribute.values(1))
+    println(Attribute.FIRE.toString)
     println(allCardData.size)
     println(allCardData(7770))
   }
 
-  def readCardData(path: String): Array[CardDataJson] = {
+  def readCardData(path: String): Array[JsonCardData] = {
     val cardDataStr = Source.fromFile(path).mkString
     val json: JsValue = Json.parse(cardDataStr)
     val cards = (json \ "card")
@@ -24,7 +27,7 @@ object CardDataReader {
     cards.toArray
   }
 
-  def parseJSToCardData(data: List[JsValue]): CardDataJson = {
+  def parseJSToCardData(data: List[JsValue]): JsonCardData = {
     val it = data.iterator
     val id = it.next().as[JsNumber].value.toLong
     val name = it.next().as[JsString].value // 1
@@ -148,7 +151,7 @@ object CardDataReader {
     val limitBreakStatGain = it.next().as[JsNumber].value.toLong
     val voiceId = it.next().as[JsNumber].value.toLong
     val orbSkin = it.next().as[JsNumber].value.toLong
-    CardDataJson(
+    JsonCardData(
       id = id,
       name = name,
       att = att,

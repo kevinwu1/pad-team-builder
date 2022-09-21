@@ -1,4 +1,4 @@
 package model
 
-enum Attribute(name: String):
-  case Red extends Attribute("Red")
+enum Attribute:
+  case FIRE, WATER, WOOD, LIGHT, DARK, HEART, NONE

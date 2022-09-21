@@ -1,0 +1,5 @@
+package model
+
+enum CardType:
+  case GOD, DRAGON, DEVIL, MACHINE, BALANCED, ATTACKER, PHYSICAL, HEALER, EVO,
+    AWAKEN, ENHANCE, REDEEM

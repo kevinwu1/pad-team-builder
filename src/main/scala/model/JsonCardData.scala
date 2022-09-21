@@ -1,6 +1,6 @@
 package model
 
-final case class CardDataJson(
+final case class JsonCardData(
     id: Long, // 0
     name: String, // 1
     att: Long,
