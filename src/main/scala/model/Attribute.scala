@@ -1,3 +1,4 @@
 package model
 
-enum Attribute() {}
+enum Attribute(name: String):
+  case Red extends Attribute("Red")

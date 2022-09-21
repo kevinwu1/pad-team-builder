@@ -28,6 +28,11 @@ vscode setup:
 tab size 2
 format on save yess
 
+switch to using sbt instead of bloop
+1 ctrl+shift+p (command palette)
+2 metals.bsp-switch
+3 select sbt
+
 
 general setup:
 download card data and skill data im not committing those massive jsons
