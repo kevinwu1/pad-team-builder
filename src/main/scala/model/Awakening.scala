@@ -1,5 +1,9 @@
 package model
 
-enum Awakening:
-  case GOD, DRAGON, DEVIL, MACHINE, BALANCED, ATTACKER, PHYSICAL, HEALER, EVO,
-    AWAKEN, ENHANCE, REDEEM
+sealed trait Awakening
+
+object Awakening {
+  def fromLong(awakLong: Long): Awakening = {
+    ???
+  }
+}

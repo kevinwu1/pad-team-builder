@@ -1,5 +1,9 @@
 package model
 
-class ActiveSkill {
-  
+class ActiveSkill {}
+
+object ActiveSkill {
+  def fromJson(activeSkill: Long, jsd: Seq[JsonSkillData]): ActiveSkill = {
+    ???
+  }
 }

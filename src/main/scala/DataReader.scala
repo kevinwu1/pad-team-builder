@@ -22,12 +22,14 @@ object DataReader {
       .as[JsArray]
       .value
       .map(card => {
-        parseJSToCardData(card.as[JsArray].value.toList)
+        parseJsonToCardData(card.as[JsArray].value.toList)
       })
     cards.toArray
   }
 
-  def parseJSToCardData(data: List[JsValue]): JsonCardData = {
+  def parseJsonToSkillData(data: List[JsValue]): JsonSkillData = {}
+
+  def parseJsonToCardData(data: List[JsValue]): JsonCardData = {
     val it = data.iterator
     val id = it.next().as[JsNumber].value.toLong
     val name = it.next().as[JsString].value // 1
