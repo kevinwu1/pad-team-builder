@@ -1,4 +1,5 @@
 package model
+import skills.ActiveSkill
 
 final case class Card(
     id: Long,
@@ -65,7 +66,11 @@ final case class Card(
     isLimitBreakable: Boolean,
     voiceId: Long,
     orbSkin: Long
-) {}
+) {
+  override def toString() = {
+    s"#$id - $name"
+  }
+}
 
 object Card {
   def cardFromJsonCardData(
@@ -93,8 +98,8 @@ object Card {
     val minRcv: Long = jcd.minRcv
     val maxRcv: Long = jcd.maxRcv
     val expCurve: Long = jcd.expCurve
-    val activeSkill: ActiveSkill =
-      ActiveSkill.fromJson(jcd.activeSkillId, jsd)
+    val activeSkill: ActiveSkill = ???
+    // ActiveSkill.fromJson(jcd.activeSkillId, jsd)
     val leaderSkill: LeaderSkill =
       LeaderSkill.fromJson(jcd.leaderSkillId, jsd)
     val turnTimer: Int = jcd.turnTimer.toInt
