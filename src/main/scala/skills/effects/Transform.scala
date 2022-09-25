@@ -14,7 +14,6 @@ case class Transform(
 }
 
 object Transform extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

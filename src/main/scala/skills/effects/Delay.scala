@@ -13,7 +13,6 @@ case class Delay(
 }
 
 object Delay extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

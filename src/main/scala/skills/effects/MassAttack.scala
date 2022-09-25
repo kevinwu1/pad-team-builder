@@ -4,24 +4,22 @@ import model.JsonSkillData
 import model.Attribute
 import model.JsonCardData
 
-case class DamageElementalAoeFixed(
-    damageAmount: Int,
-    attribute: Attribute
+case class MassAttack(
+    numTurns: Int
 ) extends SkillEffect {
   override def toString() = {
-    s"Inflicts ${damageAmount} ${attribute} attack on all enemies."
+    s"Mass attacks for $numTurns turns."
   }
 }
 
-object DamageElementalAoeFixed extends SkillEffectParser {
-
+object MassAttack extends SkillEffectParser {
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],
       cardData: Array[JsonCardData]
   ): List[SkillEffect] = {
     List(
-      DamageElementalAoeFixed(args(1), Attribute.fromOrdinal(args(0)))
+      MassAttack(args(0))
     )
   }
 

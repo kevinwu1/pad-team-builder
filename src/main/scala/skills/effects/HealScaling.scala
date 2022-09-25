@@ -13,7 +13,6 @@ case class HealScaling(
 }
 
 object HealScaling extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

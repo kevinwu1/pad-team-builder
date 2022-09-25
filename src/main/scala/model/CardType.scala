@@ -20,8 +20,8 @@ enum CardType {
     NoType
 }
 
-object CardTypeO {
-  def fromJsonCardType(cardType: Long): CardType = {
+object CardType {
+  def from(cardType: Long): CardType = {
     cardType match {
       case -1 => CardType.NoType
       case x  => CardType.fromOrdinal(x.toInt)

@@ -13,7 +13,6 @@ case class _____TEMPLATE(
 }
 
 object _____TEMPLATE extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

@@ -12,7 +12,6 @@ case class Refresh(
 }
 
 object Refresh extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

@@ -13,7 +13,6 @@ case class Poison(
 }
 
 object Poison extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

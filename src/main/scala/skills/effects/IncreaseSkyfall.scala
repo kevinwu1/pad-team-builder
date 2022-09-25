@@ -11,12 +11,11 @@ case class IncreaseSkyfall(
 ) extends SkillEffect {
   override def toString() = {
     val colorStr = colors.mkString(", ")
-    s"For $numTurns turns, $skyfallIncreasePercent% increased skyfall for $colorStr. "
+    s"$skyfallIncreasePercent% increased skyfall for $colorStr for $numTurns turns."
   }
 }
 
 object IncreaseSkyfall extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

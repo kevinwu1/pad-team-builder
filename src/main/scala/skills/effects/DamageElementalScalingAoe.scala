@@ -4,23 +4,23 @@ import model.JsonSkillData
 import model.Attribute
 import model.JsonCardData
 
-case class Shield(
-    reductionPercent: Int,
-    numTurns: Int
+case class DamageElementalScalingAoe(
+    multiplier: Int,
+    attribute: Attribute
 ) extends SkillEffect {
   override def toString() = {
-    s"Reduces damage taken by ${reductionPercent}% for $numTurns turns."
+    s"Inflicts a ${multiplier}x ${attribute} attack on all enemies."
   }
 }
 
-object Shield extends SkillEffectParser {
+object DamageElementalScalingAoe extends SkillEffectParser {
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],
       cardData: Array[JsonCardData]
   ): List[SkillEffect] = {
     List(
-      Shield(args(1), args(0))
+      DamageElementalScalingAoe(args(1) / 100, Attribute.fromOrdinal(args(0)))
     )
   }
 

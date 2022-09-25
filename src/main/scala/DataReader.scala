@@ -22,7 +22,7 @@ object DataReader {
           skillData(c.activeSkillId).internalEffectId == i
         )
       if (card.isEmpty)
-        println(card.getOrElse(s"sikll id = ${i} No card found"))
+        println(card.getOrElse(s"skill id = ${i} No card found"))
       else {
         val theCard = card.get
         println(s"#${theCard.id}-${theCard.name}: skill id = ${i}")

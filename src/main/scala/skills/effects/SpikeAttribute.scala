@@ -4,23 +4,27 @@ import model.JsonSkillData
 import model.Attribute
 import model.JsonCardData
 
-case class Shield(
-    reductionPercent: Int,
+case class SpikeAttribute(
+    multiplier: Double,
+    att: Attribute,
     numTurns: Int
 ) extends SkillEffect {
   override def toString() = {
-    s"Reduces damage taken by ${reductionPercent}% for $numTurns turns."
+    if (att == Attribute.HEART)
+      s"${multiplier}x RCV for $numTurns turns."
+    else
+      s"${multiplier}x $att ATK for $numTurns turns."
   }
 }
 
-object Shield extends SkillEffectParser {
+object SpikeAttribute extends SkillEffectParser {
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],
       cardData: Array[JsonCardData]
   ): List[SkillEffect] = {
     List(
-      Shield(args(1), args(0))
+      SpikeAttribute(args(2) / 100.0, Attribute.from(args(1)), args(0))
     )
   }
 

@@ -4,24 +4,22 @@ import model.JsonSkillData
 import model.Attribute
 import model.JsonCardData
 
-case class ChangeXtoY(
-    from: Attribute,
-    to: Attribute
+case class DamageTrueSingle(
+    damage: Int
 ) extends SkillEffect {
   override def toString() = {
-    s"Changes $from orbs to $to orbs."
+    s"Inflict $damage True damage to 1 enemy."
   }
 }
 
-object ChangeXtoY extends SkillEffectParser {
-
+object DamageTrueSingle extends SkillEffectParser {
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],
       cardData: Array[JsonCardData]
   ): List[SkillEffect] = {
     List(
-      ChangeXtoY(Attribute.from(args(0)), Attribute.from(args(1)))
+      DamageTrueSingle(args(0))
     )
   }
 

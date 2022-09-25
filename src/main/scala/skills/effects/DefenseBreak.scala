@@ -14,7 +14,6 @@ case class DefenseBreak(
 }
 
 object DefenseBreak extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

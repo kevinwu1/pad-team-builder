@@ -13,7 +13,6 @@ case class ChangeTheWorld(
 }
 
 object ChangeTheWorld extends SkillEffectParser {
-
   override def parse(
       args: List[Int],
       skillData: Array[JsonSkillData],

@@ -84,7 +84,7 @@ object Card {
     val isEvoReversable: Boolean = jcd.isEvoReversable == 1
     val types: List[CardType] =
       List(jcd.type1, jcd.type2, jcd.type3)
-        .map(CardTypeO.fromJsonCardType)
+        .map(CardType.from)
         .filter(_ != CardType.NoType)
     val starCount: Int = jcd.starCount.toInt
     val cost: Int = jcd.cost.toInt
