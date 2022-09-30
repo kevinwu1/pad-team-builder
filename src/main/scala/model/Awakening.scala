@@ -1,7 +1,7 @@
 package model
 
 enum Awakening(str: String) {
-  case Unknown extends Awakening("Unknown")
+  case None extends Awakening("None")
   case EnhancedHP extends Awakening("EnhancedHP")
   case EnhancedATK extends Awakening("EnhancedATK")
   case EnhancedRCV extends Awakening("EnhancedRCV")

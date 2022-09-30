@@ -67,6 +67,12 @@ case class GravityFalse(
     percent: Int
 ) extends SkillEffect(s"Reduce all enemies' current HP by ${percent}%. ")
 
+case class GravityTrue(percent: Int)
+    extends Gravity
+    with SkillEffect(
+      s"Reduce all enemies' current HP by $percent% of their max HP. "
+    )
+
 sealed trait Heal
 
 case class HealFlat(
@@ -85,6 +91,12 @@ case class HealScalingByAwakening(percent: Int, awks: List[Awakening])
     extends Heal
     with SkillEffect(
       s"Heal $percent% RCV as HP for each ${awks.mkString(", ")} awakening on the team. "
+    )
+
+case class HealPerTurn(percent: Int, turns: Int)
+    extends Heal
+    with SkillEffect(
+      s"Heal $percent% max HP every turn for $turns turns. "
     )
 
 case class IncreaseSkyfall(
@@ -227,9 +239,14 @@ case class Transform(
     targetName: String
 ) extends SkillEffect(s"Transform into #$targetId - $targetName")
 
+trait LeadSwap
 object LeadSwap
     extends SkillEffect(
       s"Switches places with leader. Switch back when used again. "
+    )
+object LeadSwapRightMost
+    extends SkillEffect(
+      "Switches leader and rightmost sub. Switch back when used again."
     )
 
 case class AwokenBindClear(turns: Int)
@@ -278,9 +295,17 @@ case class LockOrbs(colors: List[Attribute], numOrbs: Int)
       s"Locks ${if (numOrbs < 42) s"$numOrbs " else ""}${colors.mkString(", ")} orbs. "
     )
 
-case class ChangeEnemyAttribute(att: Attribute)
-    extends SkillEffect(
+trait ChangeEnemyAttribute
+
+case class ChangeEnemyAttributePermanent(att: Attribute)
+    extends ChangeEnemyAttribute
+    with SkillEffect(
       s"Changes all enemies' attribute to $att. "
+    )
+case class ChangeEnemyAttributeTemporary(att: Attribute, turns: Int)
+    extends ChangeEnemyAttribute
+    with SkillEffect(
+      s"Changes all enemies' attribute to $att for $turns turns. "
     )
 
 case class OrbChangeMultiTarget(
@@ -289,3 +314,57 @@ case class OrbChangeMultiTarget(
 ) extends SkillEffect(
       s"Changes ${sourceAtts.mkString(", ")} into a random mix of ${targetAtts.mkString(", ")}"
     )
+
+case class AddCombos(combos: Int, turns: Int)
+    extends SkillEffect(
+      s"Adds $combos combo${if (combos == 1) "" else "s"} for $turns turns. "
+    )
+
+case class VoidDamageAbsorb(turns: Int)
+    extends SkillEffect(
+      s"Voids damage absorption for $turns turns. "
+    )
+
+case class VoidAttributeAbsorb(turns: Int)
+    extends SkillEffect(
+      s"Voids damage absorption for $turns turns. "
+    )
+
+case class OrbChangePattern(positions: List[List[Boolean]], att: Attribute)
+    extends OrbChange
+    with SkillEffect(
+      s"Change the following orbs to $att orbs: \n${boardToStr(positions)}\n7x6:\n${boardToStr(to7x6(positions))}"
+    )
+
+case class EnhancedSkyfall(percent: Int, turns: Int)
+    extends SkillEffect(
+      s"$percent% chance for enhanced skyfall orbs for $turns turns. "
+    )
+
+object OrbTrace
+    extends SkillEffect(
+      "Unlocks all orbs. Change all orbs to Fire, Water, Wood and Light. Traces a 3-combo path on Normal dungeons with 3-linked matches."
+    )
+
+case class AllyDelay(turns: Int)
+    extends SkillEffect(
+      s"Delays team's skills for $turns turns. "
+    )
+
+case class AllyDelayRange(minTurns: Int, maxTurns: Int)
+    extends SkillEffect(
+      s"Delays team's skills for $minTurns-$maxTurns turns. "
+    )
+
+def to7x6(positions: List[List[Boolean]]): List[List[Boolean]] = {
+  val p1: List[List[Boolean]] = positions.map(l => {
+    l.slice(0, 4) ++ l.slice(3, 6)
+  })
+  p1.slice(0, 3) ++ p1.slice(2, 5)
+}
+
+def boardToStr(positions: List[List[Boolean]]) = {
+  positions
+    .map(_.map(if (_) "O" else ".").mkString("  "))
+    .mkString("\n")
+}

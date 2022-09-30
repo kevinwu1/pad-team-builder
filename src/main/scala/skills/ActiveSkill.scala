@@ -6,6 +6,7 @@ import model.JsonCardData
 import skills.effects._
 import model.Attribute
 import model.CardType
+import model.Awakening
 
 case class ActiveSkill(
     name: String,
@@ -259,7 +260,7 @@ object ActiveSkill {
         else HasteRandom(args(0), args(1))
       case 152 =>
         LockOrbs(Attribute.fromBitFlag(args(0)), args(1))
-      case 153 => ChangeEnemyAttribute(Attribute.from(args(0)))
+      case 153 => ChangeEnemyAttributePermanent(Attribute.from(args(0)))
       case 154 => {
         val inputColors = Attribute.fromBitFlag(args(0))
         val outputColors = Attribute.fromBitFlag(args(1))
@@ -270,10 +271,57 @@ object ActiveSkill {
             .map(c => OrbChangeAtoB(c, outputColors.head))
             .reduce(_ and _)
       }
-      // case 156 => args(4) match {
-      //   case 1 => HealScalingByAwakening(args(5)/100,)
-      // }
+      case 156 =>
+        args(4) match {
+          case 1 =>
+            HealScalingByAwakening(
+              args(5) / 100,
+              args.slice(1, 4).map(Awakening.from).filter(_ != Awakening.None)
+            )
+          case 2 =>
+            SpikeScalingByAwakening(
+              (args(5) - 100) / 100.0,
+              args.slice(1, 4).map(Awakening.from).filter(_ != Awakening.None),
+              args(0)
+            )
+          case 3 =>
+            ShieldScalingByAwakening(
+              (args(5) - 100) / 100.0,
+              args.slice(1, 4).map(Awakening.from).filter(_ != Awakening.None),
+              args(0)
+            )
+        }
+      case 160 => AddCombos(args(1), args(0))
+      case 161 => GravityTrue(args(0))
+      case 168 =>
+        SpikeScalingByAwakening(
+          dmgScaling = args(7),
+          awks = List(Awakening.from(args(1))),
+          turns = args(0)
+        )
+      case 173 =>
+        (if (args(1) != 0) VoidAttributeAbsorb(args(0)) else NoEffect) and
+          (if (args(3) != 0) VoidDamageAbsorb(args(0)) else NoEffect)
+      case 176 =>
+        OrbChangePattern(
+          args
+            .slice(0, 5)
+            .map(bits => {
+              (0 to 5)
+                .map(i => ((1 << i) & bits) != 0)
+                .toList
+            }),
+          Attribute.from(args(5))
+        )
+      case 179 => HealPerTurn(args(2), args(0))
+      case 180 => EnhancedSkyfall(args(1), args(0))
+      case 189 => OrbTrace
       case 202 => Transform(targetId = args(0), cardData(args(0)).name)
+      case 218 =>
+        if (args(0) == args(1)) AllyDelay(args(0))
+        else AllyDelayRange(args(0), args(1))
+      case 224 => ChangeEnemyAttributeTemporary(Attribute.from(1), args(0))
+      case 227 => LeadSwapRightMost
       case n => {
         println(s"Skill id $n not implemented.")
         println(s"args: $args")
