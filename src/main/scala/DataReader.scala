@@ -29,6 +29,8 @@ object DataReader {
         val skill =
           ActiveSkill.fromJson(theCard.activeSkillId, skillData, cardData)
         println(skill)
+        println("desc: ")
+        println(skillData(theCard.activeSkillId).desc)
         println()
       }
     })

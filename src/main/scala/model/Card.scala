@@ -133,12 +133,13 @@ object Card {
     val skillCount: Long = jcd.skillCount
     val enemySkills: List[EnemySkill] = ??? // jcd.enemySkills
     val awakeningCount: Long = jcd.awakeningCount
-    val awakenings: List[Awakening] = jcd.awakenings.map(Awakening.fromLong)
+    val awakenings: List[Awakening] =
+      jcd.awakenings.map(_.toInt).map(Awakening.from)
     val superAwakenings: List[Awakening] =
       jcd.superAwakenings
         .split(",")
-        .map(_.toLong)
-        .map(Awakening.fromLong)
+        .map(_.toInt)
+        .map(Awakening.from)
         .toList
     val evoTreeBaseId: Long = jcd.evoTreeBaseId
     val internalGroup: Long = jcd.internalGroup
