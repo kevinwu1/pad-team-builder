@@ -67,24 +67,25 @@ final case class Card(
     voiceId: Long,
     orbSkin: Long
 ) {
-  override def toString() = {
-    s"#$id - $name"
-  }
+  // override def toString() = {
+  //   s"#$id - $name"
+  // }
 }
 
 object Card {
   def cardFromJsonCardData(
       jcd: JsonCardData,
-      jsd: Seq[JsonSkillData]
+      skillData: Seq[JsonSkillData],
+      cardData: Seq[JsonCardData]
   ): Card = {
     val id: Long = jcd.id
     val name: String = jcd.name
-    val att: Attribute = Attribute.fromOrdinal(jcd.att.toInt)
-    val subatt: Attribute = Attribute.fromOrdinal(jcd.subattribute.toInt)
+    val att: Attribute = Attribute.from(jcd.att.toInt)
+    val subatt: Attribute = Attribute.from(jcd.subattribute.toInt)
     val isEvoReversable: Boolean = jcd.isEvoReversable == 1
     val types: List[CardType] =
       List(jcd.type1, jcd.type2, jcd.type3)
-        .map(CardType.from)
+        .map(t => CardType.from(t.toInt))
         .filter(_ != CardType.NoType)
     val starCount: Int = jcd.starCount.toInt
     val cost: Int = jcd.cost.toInt
@@ -98,10 +99,10 @@ object Card {
     val minRcv: Long = jcd.minRcv
     val maxRcv: Long = jcd.maxRcv
     val expCurve: Long = jcd.expCurve
-    val activeSkill: ActiveSkill = ???
-    // ActiveSkill.fromJson(jcd.activeSkillId, jsd)
+    val activeSkill: ActiveSkill =
+      ActiveSkill.fromJson(jcd.activeSkillId, skillData, cardData)
     val leaderSkill: LeaderSkill =
-      LeaderSkill.fromJson(jcd.leaderSkillId, jsd)
+      LeaderSkill.fromJson(jcd.leaderSkillId, skillData)
     val turnTimer: Int = jcd.turnTimer.toInt
     val enemyHpAtLv1: Long = jcd.enemyHpAtLv1
     val enemyHpAtLv10: Long = jcd.enemyHpAtLv10
@@ -131,13 +132,14 @@ object Card {
     val charges: Long = jcd.charges
     val chargeGain: Long = jcd.chargeGain
     val skillCount: Long = jcd.skillCount
-    val enemySkills: List[EnemySkill] = ??? // jcd.enemySkills
+    val enemySkills: List[EnemySkill] = List() // jcd.enemySkills
     val awakeningCount: Long = jcd.awakeningCount
     val awakenings: List[Awakening] =
       jcd.awakenings.map(_.toInt).map(Awakening.from)
     val superAwakenings: List[Awakening] =
       jcd.superAwakenings
         .split(",")
+        .filter(_.nonEmpty)
         .map(_.toInt)
         .map(Awakening.from)
         .toList

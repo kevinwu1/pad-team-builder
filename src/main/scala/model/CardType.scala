@@ -21,10 +21,14 @@ enum CardType {
 }
 
 object CardType {
-  def from(cardType: Long): CardType = {
+  def from(cardType: Int): CardType = {
     cardType match {
       case -1 => CardType.NoType
       case x  => CardType.fromOrdinal(x.toInt)
     }
+  }
+
+  def fromBitFlag(bits: Long): List[CardType] = {
+    CardType.values.filter(att => (bits & (1 << att.ordinal)) != 0).toList
   }
 }

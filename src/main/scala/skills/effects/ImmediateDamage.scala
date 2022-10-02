@@ -24,10 +24,14 @@ class DRange(floor: Int, ceil: Int)
       else s"${floor}x-${ceil}x ATK"
     )
 class DGrudge(hpMaxMult: Int, hp1Mult: Int)
-    extends DAmount(s"${hpMaxMult}x at full HP, up to ${hp1Mult}x at 1 HP,")
+    extends DAmount(s"[${hpMaxMult}x at full HP, up to ${hp1Mult}x at 1 HP]")
 class DTeamAtkMult(multiplier: Int, atts: List[Attribute])
     extends DAmount(
       s"[${multiplier}x of entire team's ${atts.mkString(" and ")} ATK]"
+    )
+class DTeamHpMult(multiplier: Int)
+    extends DAmount(
+      s"${multiplier}x of entire team's HP"
     )
 
 sealed trait DType(str: String) {

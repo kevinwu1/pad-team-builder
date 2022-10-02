@@ -1,24 +1,28 @@
 package skills.effects
 
-import model.JsonSkillData
-import model.Card
-import model.JsonCardData
-import model.Attribute
-import model.CardType
+import model._
 import skills.ActiveSkill
-import model.Awakening
 
 trait SkillEffect(str: String) {
   def and(other: SkillEffect): SkillEffect = {
     (this, other) match {
       case (_, NoEffect) => this
+      case (left, c: ConditionalComponent) =>
+        throw new Exception(
+          "ConditionalComponent can't be on the right of and in: " +
+            left + " and " + c
+        ) // this is not supposed to happen
       case (MultiEffect(e1), MultiEffect(e2)) =>
         MultiEffect(e1 ::: e2)
-      case (MultiEffect(effectsList), effect2) =>
-        MultiEffect(effectsList :+ effect2)
-      case (effect1, MultiEffect(effectsList2)) =>
-        MultiEffect(effectsList2 :+ effect1)
-      case nonMultiEffect =>
+      case (MultiEffect(effectsList), e2) =>
+        MultiEffect(effectsList :+ e2)
+      case (e1, MultiEffect(effectsList2)) =>
+        MultiEffect(e1 +: effectsList2)
+      case (cond: ConditionalComponent, e2) =>
+        ConditionalEffect(cond, e2)
+      case (ConditionalEffect(cond, e1), e2) =>
+        ConditionalEffect(cond, e1 and e2)
+      case _ =>
         MultiEffect(List(this, other))
     }
   }
@@ -31,7 +35,26 @@ object NoEffect extends SkillEffect("") {
 }
 
 case class MultiEffect(effects: List[SkillEffect])
-    extends SkillEffect(effects.mkString("\n"))
+    extends SkillEffect(
+      effects.mkString("\n")
+      // effects.zipWithIndex.map((e, i) => s"${i + 1}. $e").mkString("\n")
+    )
+
+case class EvolvingEffect(loop: Boolean, skills: List[ActiveSkill])
+    extends SkillEffect(
+      s"Evolving skill, ${
+          if (loop) "loop when end is reached" else "does not loop"
+        }: \n${skills.zipWithIndex
+          .map((skill, i) => s"Stage ${i + 1} (cd ${skill.cdStr}): \n${skill.skillEffect}")
+          .mkString("\n")}"
+    )
+
+case class ConditionalEffect(
+    condition: ConditionalComponent,
+    effect: SkillEffect
+) extends SkillEffect(
+      s"$condition[\n$effect\n]"
+    )
 
 case class ChangeTheWorld(
     seconds: Int
@@ -43,10 +66,13 @@ case class CounterAttack(
     turns: Int
 ) extends SkillEffect(s"${multiplier}x $att counterattack for $turns turns. ")
 
-case class Suicide(percentLost: Double)
-    extends SkillEffect(s"HP reduced by ${percentLost}%. ")
+trait Suicide
 
-object FullSuicide extends SkillEffect(s"HP reduced to 1. ")
+case class SuicidePartial(percentLost: Double)
+    extends Suicide
+    with SkillEffect(s"HP reduced by ${percentLost}%. ")
+
+object SuicideFull extends Suicide with SkillEffect(s"HP reduced to 1. ")
 
 case class DefenseBreak(
     percent: Int,
@@ -55,7 +81,7 @@ case class DefenseBreak(
 
 case class Delay(
     turns: Int
-) extends SkillEffect(s"Delays ${turns} turns to all enemies. ")
+) extends SkillEffect(s"Delays enemies for ${turns} turns. ")
 
 case class EnhanceOrbs(
     attribute: Attribute
@@ -65,7 +91,9 @@ sealed trait Gravity
 
 case class GravityFalse(
     percent: Int
-) extends SkillEffect(s"Reduce all enemies' current HP by ${percent}%. ")
+) extends SkillEffect(
+      s"Reduce all enemies' current HP by ${percent}% of their current HP. "
+    )
 
 case class GravityTrue(percent: Int)
     extends Gravity
@@ -91,6 +119,11 @@ case class HealScalingByAwakening(percent: Int, awks: List[Awakening])
     extends Heal
     with SkillEffect(
       s"Heal $percent% RCV as HP for each ${awks.mkString(", ")} awakening on the team. "
+    )
+
+case class HealByTeamRCV(multiplier: Int)
+    extends SkillEffect(
+      s"Heal ${multiplier}x of entire team's RCV. "
     )
 
 case class HealPerTurn(percent: Int, turns: Int)
@@ -121,7 +154,7 @@ case class OrbChangeAtoB(
 
 case class OrbChangeFullBoard(
     attribute: List[Attribute]
-) extends SkillEffect(s"Change all orbs to ${attribute.mkString(", ")}. ")
+) extends SkillEffect(s"Changes all orbs to ${attribute.mkString(", ")}. ")
     with OrbChange
 
 enum Column(desc: String) {
@@ -170,14 +203,40 @@ case class OrbChangeRandomSpawn(
     spawnAtts: List[Attribute],
     exclAtts: List[Attribute]
 ) extends OrbChange
-    with SkillEffect(s"Randomly spawn $numOrbs ${spawnAtts
-        .mkString(", ")} orbs from non ${exclAtts.mkString(", ")} orbs. ")
+    with SkillEffect(s"Randomly spawn ${spawnAtts
+        .map(att => s"$numOrbs $att")
+        .mkString(", ")} orbs from non [${exclAtts.mkString(", ")}] orbs. ")
 
 case class Poison(
     multiplier: Int
 ) extends SkillEffect(s"Poisons enemies with ${multiplier}x ATK. ")
 
 object Refresh extends SkillEffect(s"Replaces all orbs. ")
+
+sealed trait RCVBoost
+case class RCVBoostMult(multiplier: Double, turns: Int)
+    extends RCVBoost
+    with SkillEffect(
+      s"${multiplier}x RCV for $turns turns. "
+    )
+case class RCVBoostByAwakening(
+    rcvScaling: Double,
+    awks: List[Awakening],
+    turns: Int
+) extends RCVBoost
+    with SkillEffect(
+      s"1+(${rcvScaling}x) RCV for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
+    )
+
+case class RCVBoostByAttributeAndType(
+    rcvScaling: Double,
+    atts: List[Attribute],
+    types: List[CardType],
+    turns: Int
+) extends RCVBoost
+    with SkillEffect(
+      s"1+(${rcvScaling}x) RCV for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
+    )
 
 sealed trait Shield
 case class ShieldAll(
@@ -211,10 +270,7 @@ case class SpikeAttribute(
     turns: Int
 ) extends Spike
     with SkillEffect(
-      if (att == Attribute.HEART)
-        s"${multiplier}x RCV for $turns turns. "
-      else
-        s"${multiplier}x ATK for $att attribute for $turns turns. "
+      s"${multiplier}x ATK for $att for $turns turns. "
     )
 
 case class SpikeType(
@@ -234,10 +290,51 @@ case class SpikeScalingByAwakening(
       s"1+(${dmgScaling}x) ATK for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     )
 
-case class Transform(
+case class SpikeScalingByAttributeAndType(
+    dmgScaling: Double,
+    atts: List[Attribute],
+    types: List[CardType],
+    turns: Int
+) extends Spike
+    with SkillEffect(
+      s"1+(${dmgScaling}x) ATK for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
+    )
+
+enum CardSlot(desc: String) {
+  case ThisCard extends CardSlot("this card")
+  case YourLead extends CardSlot("your leader")
+  case FriendLead extends CardSlot("friend leader")
+  case AllSubs extends CardSlot("all subs")
+  override def toString = desc
+}
+
+object CardSlot {
+  def from(bits: Int): List[CardSlot] = {
+    CardSlot.values.filter(att => (bits & (1 << att.ordinal)) != 0).toList
+  }
+}
+
+case class SpikeSlots(multiplier: Double, slots: List[CardSlot], turns: Int)
+    extends Spike
+    with SkillEffect(
+      s"${multiplier}x ATK for ${slots.mkString(", ")} for $turns turns. "
+    )
+
+trait Transform
+
+case class TransformFixed(
     targetId: Int,
     targetName: String
-) extends SkillEffect(s"Transform into #$targetId - $targetName")
+) extends Transform
+    with SkillEffect(s"Transform into #$targetId - $targetName")
+
+case class TransformRandom(targets: List[(Int, String)])
+    extends Transform
+    with SkillEffect(
+      s"Transforms randomly into one of the following: \n${targets.zipWithIndex
+          .map((targ, ind) => s"${ind + 1}. ${targ._1} - ${targ._2}")
+          .mkString("\n")}"
+    )
 
 trait LeadSwap
 object LeadSwap
@@ -250,10 +347,10 @@ object LeadSwapRightMost
     )
 
 case class AwokenBindClear(turns: Int)
-    extends SkillEffect(s"$turns turn awoken bind clear. ")
+    extends SkillEffect(s"Awoken bind reduced for $turns turns. ")
 
 case class BindClear(turns: Int)
-    extends SkillEffect(s"$turns turn bind clear. ")
+    extends SkillEffect(s"Bind reduced for $turns turns. ")
 
 case class Random(effects: List[ActiveSkill])
     extends SkillEffect({
@@ -277,7 +374,7 @@ case class TimeExtendMult(mult: Double, turns: Int)
     )
 
 case class AttributeChange(turns: Int, att: Attribute)
-    extends SkillEffect(s"Change own attribute to $att for $turns turns. ")
+    extends SkillEffect(s"Changes own attribute to $att for $turns turns. ")
 
 trait Haste
 case class HasteFixed(turns: Int)
@@ -320,20 +417,29 @@ case class AddCombos(combos: Int, turns: Int)
       s"Adds $combos combo${if (combos == 1) "" else "s"} for $turns turns. "
     )
 
+trait Void
+
 case class VoidDamageAbsorb(turns: Int)
-    extends SkillEffect(
+    extends Void
+    with SkillEffect(
       s"Voids damage absorption for $turns turns. "
     )
 
 case class VoidAttributeAbsorb(turns: Int)
-    extends SkillEffect(
-      s"Voids damage absorption for $turns turns. "
+    extends Void
+    with SkillEffect(
+      s"Voids attribute absorption for $turns turns. "
+    )
+case class VoidVoid(turns: Int)
+    extends Void
+    with SkillEffect(
+      s"Voids damage void for $turns turns. "
     )
 
 case class OrbChangePattern(positions: List[List[Boolean]], att: Attribute)
     extends OrbChange
     with SkillEffect(
-      s"Change the following orbs to $att orbs: \n${boardToStr(positions)}\n7x6:\n${boardToStr(to7x6(positions))}"
+      s"Changes the following orbs to $att orbs: \n${Board.boardPositionToCompleteStr(positions)}"
     )
 
 case class EnhancedSkyfall(percent: Int, turns: Int)
@@ -343,7 +449,7 @@ case class EnhancedSkyfall(percent: Int, turns: Int)
 
 object OrbTrace
     extends SkillEffect(
-      "Unlocks all orbs. Change all orbs to Fire, Water, Wood and Light. Traces a 3-combo path on Normal dungeons with 3-linked matches."
+      "Unlocks all orbs. \nChanges all orbs to Fire, Water, Wood and Light. \nTraces a 3-combo path on Normal dungeons with 3-linked matches."
     )
 
 case class AllyDelay(turns: Int)
@@ -356,15 +462,75 @@ case class AllyDelayRange(minTurns: Int, maxTurns: Int)
       s"Delays team's skills for $minTurns-$maxTurns turns. "
     )
 
-def to7x6(positions: List[List[Boolean]]): List[List[Boolean]] = {
-  val p1: List[List[Boolean]] = positions.map(l => {
-    l.slice(0, 4) ++ l.slice(3, 6)
-  })
-  p1.slice(0, 3) ++ p1.slice(2, 5)
-}
+object UnlockOrbs extends SkillEffect("Unlock all orbs. ")
 
-def boardToStr(positions: List[List[Boolean]]) = {
-  positions
-    .map(_.map(if (_) "O" else ".").mkString("  "))
-    .mkString("\n")
-}
+case class UnmatchableClear(turns: Int)
+    extends SkillEffect(
+      s"Unmatchable reduced status by $turns turns. "
+    )
+
+case class NoSkyfall(turns: Int)
+    extends SkillEffect(
+      s"No skyfall combos for $turns turns. "
+    )
+
+trait ConditionalComponent
+
+case class ConditionalComponentHP(hpReq: Int, needsToBeMore: Boolean)
+    extends ConditionalComponent
+    with SkillEffect(
+      s"The following activates only if hp is ${
+          if (needsToBeMore) "more" else "less"
+        } than $hpReq%: "
+    )
+
+case class ConditionalComponentFloor(floorReq: Int, needsToBeAfter: Boolean)
+    extends ConditionalComponent
+    with SkillEffect(
+      s"The following activates only if floor is ${
+          if (needsToBeAfter) "after" else "before"
+        } than $floorReq%: "
+    )
+
+trait Spinner
+
+case class SpinnerRandom(numSpinners: Int, speed: Double, turns: Int)
+    extends Spinner
+    with SkillEffect(
+      s"Spawn $numSpinners spinners at random at $speed for $turns turns. "
+    )
+
+case class SpinnerFixed(
+    positions: List[List[Boolean]],
+    speed: Double,
+    turns: Int
+) extends Spinner
+    with SkillEffect(
+      s"Spawn spinners in the following positions: \n${Board
+          .boardPositionToCompleteStr(positions)} \nat $speed speed for $turns turns."
+    )
+
+case class LockedSkyfall(atts: List[Attribute], turns: Int)
+    extends SkillEffect(
+      s"${atts.mkString(", ")} skyfall locked for $turns turns. "
+    )
+
+case class UnableToUseSkills(turns: Int)
+    extends SkillEffect(
+      s"Unable to use skills for $turns turns. "
+    )
+
+case class SelfUnmatchable(atts: List[Attribute], turns: Int)
+    extends SkillEffect(
+      s"${atts.mkString(", ")} orbs are unmatchable for $turns turns. "
+    )
+
+case class NailOrbSkyfall(skyfallChance: Int, turns: Int)
+    extends SkillEffect(
+      s"$skyfallChance% nail orb skyfall for $turns turns. "
+    )
+
+case class MaxHPMult(multiplier: Double, turns: Int)
+    extends SkillEffect(
+      s"${multiplier}x max HP for $turns turns. "
+    )
