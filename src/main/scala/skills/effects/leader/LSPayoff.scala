@@ -1,0 +1,88 @@
+package skills.effects.leader
+import model._
+
+sealed trait LSPayoff(str: String) {
+  override def toString = str
+}
+
+object LSPayoffNone extends LSPayoff("no effect")
+sealed trait StatBoost extends LSPayoff
+case class HPBoost(mult: Double)
+    extends StatBoost
+    with LSPayoff(
+      s"${mult}x HP"
+    )
+case class ATKBoost(mult: Double)
+    extends StatBoost
+    with LSPayoff(
+      s"${mult}x ATK"
+    )
+case class RCVBoost(mult: Double)
+    extends StatBoost
+    with LSPayoff(
+      s"${mult}x RCV"
+    )
+
+sealed trait Shield
+
+case class ShieldElement(reduction: Int, att: Attribute)
+    extends Shield
+    with LSPayoff(
+      s"$reduction% reduced $att damage taken. "
+    )
+
+case class ShieldRegular(reduction: Int)
+    extends Shield
+    with LSPayoff(
+      s"$reduction% reduced damage taken. "
+    )
+
+sealed trait BonusAttack
+case class BonusAttackScaling(ratio: Double)
+    extends BonusAttack
+    with LSPayoff(
+      s"inflicts a bonus attack equal to ${ratio}x ATK. "
+    )
+
+trait AutoHeal
+case class AutoHealScaling(ratio: Double)
+    extends AutoHeal
+    with LSPayoff(
+      s"heal HP equal to ${ratio}x RCV. "
+    )
+
+object Resolve
+    extends LSPayoff(
+      s"survive a single hit. "
+    )
+
+case class PayoffChance(chance: Int, payoff: LSPayoff)
+    extends LSPayoff(
+      s"$chance% chance for $payoff"
+    )
+
+def Chance(chance: Int, payoff: LSPayoff): LSPayoff = {
+  if (chance != 100)
+    PayoffChance(chance, payoff)
+  else payoff
+}
+
+object DrummingSound
+    extends LSPayoff(
+      s"A drumming sound is made when orbs are moved. "
+    )
+
+case class CoinBoost(rate: Double)
+    extends LSPayoff(
+      s"1.5x coin drop rate when entering a dungeon as Leader"
+    )
+
+case class CounterAttack(mult: Double, att: Attribute)
+    extends LSPayoff(
+      s"${mult}x $att counterattack. "
+    )
+
+case class TimeExtend(seconds: Double)
+    extends LSPayoff(
+      s"extra $seconds seconds move time. "
+    )

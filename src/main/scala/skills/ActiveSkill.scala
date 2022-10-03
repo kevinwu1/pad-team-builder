@@ -1,7 +1,7 @@
 package skills
 
 import model._
-import skills.effects._
+import skills.effects.active._
 
 case class ActiveSkill(
     name: String,
@@ -486,6 +486,17 @@ object ActiveSkill {
           targets = args.map(i => (i, cardData(i).name))
         )
       case 237 => MaxHPMult(args(1) / 100.0, args(0))
+      // 8p effects
+      case 1000 => {
+        println(s"args: $args")
+        println(args(2).toBinaryString)
+        println("desc: ")
+        println(jsd.desc)
+        println()
+        println()
+        println()
+        NoEffect
+      }
       case n => {
         println(s"Skill id $n not implemented.")
         println(s"args: $args")

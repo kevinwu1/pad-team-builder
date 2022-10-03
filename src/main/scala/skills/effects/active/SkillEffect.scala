@@ -1,4 +1,4 @@
-package skills.effects
+package skills.effects.active
 
 import model._
 import skills.ActiveSkill

@@ -1,5 +1,6 @@
 package model
 import skills.ActiveSkill
+import skills.LeaderSkill
 
 final case class Card(
     id: Long,
@@ -102,7 +103,7 @@ object Card {
     val activeSkill: ActiveSkill =
       ActiveSkill.fromJson(jcd.activeSkillId, skillData, cardData)
     val leaderSkill: LeaderSkill =
-      LeaderSkill.fromJson(jcd.leaderSkillId, skillData)
+      LeaderSkill.fromJson(jcd.leaderSkillId, skillData, cardData)
     val turnTimer: Int = jcd.turnTimer.toInt
     val enemyHpAtLv1: Long = jcd.enemyHpAtLv1
     val enemyHpAtLv10: Long = jcd.enemyHpAtLv10

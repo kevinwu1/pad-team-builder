@@ -1,7 +1,10 @@
+package main
+
 import scala.io.Source
 import model._
 import play.api.libs.json._
 import skills.ActiveSkill
+import skills.LeaderSkill
 import scala.util.Random
 
 object DataReader {
@@ -11,16 +14,53 @@ object DataReader {
     val cardData = readCardData(cardDataFile)
     val skillData = readSkillData(skillDataFile)
     println(skillData.length)
-    testCardParsing(cardData, skillData)
-    println()
+    println("carddata length: " + cardData.size)
+    val cards = testLSParsing(cardData, skillData)
+  }
 
+  def parseAllCardsFromJsonCardData(
+      cardData: Array[JsonCardData],
+      skillData: Array[JsonSkillData]
+  ) = {
+    cardData.map(jcd => {
+      Card.cardFromJsonCardData(jcd, skillData, cardData)
+    })
+  }
+
+  def testLSParsing(
+      cardData: Array[JsonCardData],
+      skillData: Array[JsonSkillData]
+  ) = {
+    (0 to 250).foreach(i => {
+      val card =
+        cardData.tail
+          .find(c => skillData(c.leaderSkillId).internalEffectId == i)
+      if (card.isEmpty) println(card.getOrElse(s"LS id = ${i} No card found"))
+      else {
+        val theCard = card.get
+        val theskillData = skillData(theCard.leaderSkillId)
+        println(
+          s"#${theCard.id}-${theCard.name}: LS id = ${theCard.leaderSkillId}: internal skill id = ${theskillData.internalEffectId}"
+        )
+        println("Desc: ")
+        println(skillData(theCard.leaderSkillId).desc)
+        val skill =
+          LeaderSkill.fromJson(theCard.leaderSkillId, skillData, cardData)
+        println()
+        println("Parsed: ")
+        println(skill.effect)
+        println()
+        println()
+        println()
+      }
+    })
   }
 
   def testCardParsing(
       cardData: Array[JsonCardData],
       skillData: Array[JsonSkillData]
   ) = {
-    (8765 to 8765).foreach(i => {
+    (1 to 1000).foreach(i => {
       val jcd = cardData(i)
       val theskillData = skillData(jcd.activeSkillId)
       println("Parsing")
