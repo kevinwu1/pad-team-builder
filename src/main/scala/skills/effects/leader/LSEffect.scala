@@ -2,6 +2,7 @@ package skills.effects.leader
 
 import model._
 
+//is this a monoid?
 trait LSEffect(str: String) {
   override def toString = str
   def and(other: LSEffect): LSEffect = {
@@ -34,3 +35,17 @@ case class MultiLSEffect(effects: List[LSEffect])
     )
 
 object LSEffectNone extends LSEffect("")
+
+def firstOf(effects: List[LSEffect]): LSEffect = {
+  if (effects.size == 1)
+    effects.head
+  else
+    DynamicSelectEffect(effects)
+}
+
+case class DynamicSelectEffect(effects: List[LSEffect])
+    extends LSEffect(
+      s"Up to 1 of the following effects: [\n${effects.zipWithIndex
+          .map((e, i) => s"${i + 1}. $e")
+          .mkString("\n")}\n]"
+    )

@@ -3,6 +3,7 @@ package skills.effects.active
 import model._
 import skills.ActiveSkill
 
+//is this a monoid?
 trait SkillEffect(str: String) {
   def and(other: SkillEffect): SkillEffect = {
     (this, other) match {

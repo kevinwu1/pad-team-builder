@@ -16,7 +16,7 @@ case class ActiveSkill(
   }
 }
 
-class SafeList(arr: List[Int]) {
+case class SafeList(arr: List[Int]) {
   def apply(i: Int) = {
     try {
       arr(i)
