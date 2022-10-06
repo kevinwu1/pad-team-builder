@@ -18,7 +18,11 @@ object Attribute {
   }
 
   def firstFromBitFlag(bitFlag: Int): Attribute = {
-    Attribute.values.find(att => ((1 << att.ordinal()) & bitFlag) != 0).get
+    val atts = fromBitFlag(bitFlag)
+    if (atts.size != 1)
+      ???
+    else
+      atts.head
   }
 
   def from(value: Long): Attribute = from(value.toInt)

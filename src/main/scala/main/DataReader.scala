@@ -71,7 +71,7 @@ object DataReader {
       cardData: Array[JsonCardData],
       skillData: Array[JsonSkillData]
   ) = {
-    (1548 to 2000).foreach(i => {
+    (2389 to 3000).foreach(i => {
       val theCard = cardData(i)
       val theskillData = skillData(theCard.leaderSkillId)
       println(
