@@ -44,6 +44,12 @@ case class BonusAttackScaling(ratio: Double)
       s"inflicts a bonus attack equal to ${ratio}x ATK. "
     )
 
+case class BonusAttackFixed(dmg: Int)
+    extends BonusAttack
+    with LSPayoff(
+      s"inflicts a $dmg damage bonus attack. "
+    )
+
 trait AutoHeal
 case class AutoHealScaling(ratio: Double)
     extends AutoHeal
@@ -85,4 +91,29 @@ case class CounterAttack(mult: Double, att: Attribute)
 case class TimeExtend(seconds: Double)
     extends LSPayoff(
       s"extra $seconds seconds move time. "
+    )
+
+case class RankExpBoost(rate: Double)
+    extends LSPayoff(
+      s"${rate}x rank EXP. "
+    )
+
+object NoSkyfall
+    extends LSPayoff(
+      s"No skyfall. "
+    )
+
+object Board7x6
+    extends LSPayoff(
+      s"7x6 board. "
+    )
+
+case class AddCombos(numCombos: Int)
+    extends LSPayoff(
+      s"adds $numCombos combo${if (numCombos == 1) "" else "s"}. "
+    )
+
+case class FixedTime(seconds: Double)
+    extends LSPayoff(
+      s"fixes move time at $seconds seconds. "
     )

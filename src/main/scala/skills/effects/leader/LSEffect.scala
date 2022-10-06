@@ -8,6 +8,7 @@ trait LSEffect(str: String) {
   def and(other: LSEffect): LSEffect = {
     (this, other) match {
       case (_, LSEffectNone) => this
+      case (LSEffectNone, _) => other
       case (MultiLSEffect(e1), MultiLSEffect(e2)) =>
         MultiLSEffect(e1 ::: e2)
       case (MultiLSEffect(effectsList), e2) =>
@@ -27,6 +28,10 @@ case class LSPassive(payoff: LSPayoff)
 case class LSComponent(condition: LSCondition, payoff: LSPayoff)
     extends LSEffect(
       s"If $condition, then $payoff"
+    )
+case class LSComponentInfinite(condition: LSCondition, payoff: LSPayoff)
+    extends LSEffect(
+      s"For each $condition, $payoff"
     )
 
 case class MultiLSEffect(effects: List[LSEffect])

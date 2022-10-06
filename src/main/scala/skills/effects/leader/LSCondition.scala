@@ -58,7 +58,7 @@ case class ConditionColorsMatched(atts: List[Attribute], matchRequirement: Int)
 
 case class ConditionCombos(numCombos: Int)
     extends LSCondition(
-      s"$numCombos combos made"
+      s"at least $numCombos combos made"
     )
 case class ConditionCombosExact(numCombos: Int)
     extends LSCondition(
@@ -67,7 +67,7 @@ case class ConditionCombosExact(numCombos: Int)
 
 case class ConditionOrbsLinked(numOrbs: Int, att: Attribute)
     extends LSCondition(
-      s"$numOrbs linked $att orbs"
+      s"at least $numOrbs linked $att orbs"
     )
 
 case class ConditionCardOnTeam(cardId: Int)
@@ -75,7 +75,32 @@ case class ConditionCardOnTeam(cardId: Int)
       s"$cardId is on the team"
     )
 
-object SkillUsed
+object ConditionSkillUsed
     extends LSCondition(
       s"a skill was used"
+    )
+
+object ConditionSparkle
+    extends LSCondition(
+      s"5 orbs with 1+ enhanced matched"
+    )
+
+case class ConditionCross(att: Attribute)
+    extends LSCondition(
+      s"$att cross matched"
+    )
+
+case class ConditionCollab(collab: Collab)
+    extends LSCondition(
+      s"all subs are from $collab collab"
+    )
+
+case class ConditionOrbsRemaining(numOrbs: Int)
+    extends LSCondition(
+      s"$numOrbs orbs remaining"
+    )
+
+case class ConditionLMatched(att: Attribute)
+    extends LSCondition(
+      s"$att L matched"
     )

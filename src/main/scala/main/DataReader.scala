@@ -27,21 +27,32 @@ object DataReader {
     })
   }
 
-  def testLSParsing(
+  def testLSParsing2(
       cardData: Array[JsonCardData],
       skillData: Array[JsonSkillData]
   ) = {
-    (0 to 250).foreach(i => {
-      val card =
-        cardData.tail
-          .find(c => skillData(c.leaderSkillId).internalEffectId == i)
-      if (card.isEmpty) println(card.getOrElse(s"LS id = ${i} No card found"))
-      else {
-        val theCard = card.get
-        val theskillData = skillData(theCard.leaderSkillId)
+    val target = 165
+    (0 to 4000).foreach(i => {
+      val theCard = cardData(i)
+      val theskillData = skillData(theCard.leaderSkillId)
+      val matchesTarget =
+        if (skillData(theCard.leaderSkillId).internalEffectId == 138)
+          skillData(theCard.leaderSkillId).args
+            .map(skillData)
+            .map(_.internalEffectId)
+            .exists(_ == target)
+        else
+          skillData(theCard.leaderSkillId).internalEffectId == target
+      if (matchesTarget) {
         println(
           s"#${theCard.id}-${theCard.name}: LS id = ${theCard.leaderSkillId}: internal skill id = ${theskillData.internalEffectId}"
         )
+        skillData(theCard.leaderSkillId).args
+          .map(skillData)
+          .filter(_.internalEffectId == target)
+          .foreach(s =>
+            println(s.id + " ::: " + s.internalEffectId + ":::" + s.args)
+          )
         println("Desc: ")
         println(skillData(theCard.leaderSkillId).desc)
         val skill =
@@ -53,6 +64,29 @@ object DataReader {
         println()
         println()
       }
+    })
+  }
+
+  def testLSParsing(
+      cardData: Array[JsonCardData],
+      skillData: Array[JsonSkillData]
+  ) = {
+    (1548 to 2000).foreach(i => {
+      val theCard = cardData(i)
+      val theskillData = skillData(theCard.leaderSkillId)
+      println(
+        s"#${theCard.id}-${theCard.name}: LS id = ${theCard.leaderSkillId}: internal skill id = ${theskillData.internalEffectId}"
+      )
+      println("Desc: ")
+      println(skillData(theCard.leaderSkillId).desc)
+      val skill =
+        LeaderSkill.fromJson(theCard.leaderSkillId, skillData, cardData)
+      println()
+      println("Parsed: ")
+      println(skill.effect)
+      println()
+      println()
+      println()
     })
   }
 
