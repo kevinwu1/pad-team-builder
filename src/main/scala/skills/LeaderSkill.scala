@@ -5,10 +5,9 @@ import model._
 import skills.effects.active.ShieldAttribute
 
 case class LeaderSkill(name: String, effect: LSEffect) {}
+val NO_LS = LeaderSkill("None", LSEffectNone)
 
 object LeaderSkill {
-  val NO_LS = LeaderSkill("None", LSEffectNone)
-
   def fromJson(
       jsonId: Int,
       skillData: Seq[JsonSkillData],
@@ -120,7 +119,7 @@ object LeaderSkill {
         LSComponent(condition, ShieldRegular(args(2)))
       }
       case 39 =>
-        getStatPayoffs(atk = args(1), rcv = args(2))
+        getAtkRcvPayoffsConditional(List(args(3), args(3)), args.slice(1, 3))
           .map(payoff =>
             LSComponent(
               ConditionHPThreshold(
@@ -160,19 +159,18 @@ object LeaderSkill {
           Chance(args(1), ShieldRegular(args(2)))
         )
       case 44 =>
-        getStatPayoffs(
-          atk = args(1),
-          rcv = args(2)
-        ).map(payoff =>
-          LSComponent(
-            ConditionHPThreshold(
-              hpPercent = args(0),
-              isGreater = true,
-              allowEqual = true
-            ),
-            payoff
-          ): LSEffect
-        ).reduceOption(_ and _)
+        getAtkRcvPayoffsConditional(List(args(3), args(3)), args.slice(1, 3))
+          .map(payoff =>
+            LSComponent(
+              ConditionHPThreshold(
+                hpPercent = args(0),
+                isGreater = true,
+                allowEqual = true
+              ),
+              payoff
+            ): LSEffect
+          )
+          .reduceOption(_ and _)
           .getOrElse(LSEffectNone)
       case 45 =>
         getStatPayoffs(
@@ -514,15 +512,21 @@ object LeaderSkill {
           .toList
         firstOf(effects)
       }
-      case 121 =>
+      case 121 => {
+
         val conditions = (conditionAttributesFromBits(args(0)) ++
           conditionTypesFromBits(args(1)))
         val payoffs = getStatPayoffs(hp = args(2), atk = args(3), rcv = args(4))
-        conditions
-          .cartesian(payoffs)
-          .map(LSComponent(_, _): LSEffect)
-          .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+        firstOf(
+          conditions.map(cond =>
+            payoffs
+              .map(payoff => LSComponent(cond, payoff): LSEffect)
+              .reduceOption(_ and _)
+              .getOrElse(LSEffectNone)
+          )
+        )
+
+      }
       case 122 => {
         val conditions = conditionAttributesFromBits(args(1)) ++
           conditionTypesFromBits(args(2))
@@ -612,12 +616,17 @@ object LeaderSkill {
             getStatPayoffs(hp = args(2), atk = args(3), rcv = args(4))
           val conditions = atts ++ types
 
-          (payoffs
-            .flatMap(payoff =>
-              conditions.map(cond => LSComponent(cond, payoff): LSEffect)
-            ) ++ resistAtts
-            .map(att => LSPassive(ShieldElement(resistance, att))))
-            .reduce(_ and _)
+          firstOf(
+            conditions.map(cond =>
+              payoffs
+                .map(payoff => LSComponent(cond, payoff): LSEffect)
+                .reduceOption(_ and _)
+                .getOrElse(LSEffectNone)
+            )
+          ) and resistAtts
+            .map(att => LSPassive(ShieldElement(resistance, att)): LSEffect)
+            .reduceOption(_ and _)
+            .getOrElse(LSEffectNone)
         }
       }
       case 130 => {
@@ -677,15 +686,19 @@ object LeaderSkill {
         val payoffs = getStatPayoffs(atk = args(2), rcv = args(3))
         val conditions = atts ++ types
 
-        conditions
-          .cartesian(payoffs)
-          .map((cond, payoff) =>
-            LSComponent(
-              ConditionSkillUsed and cond,
-              payoff
-            ): LSEffect
-          )
-          .reduce(_ and _)
+        firstOf(
+          conditions
+            .map(cond =>
+              payoffs
+                .map(payoff =>
+                  LSComponent(
+                    ConditionSkillUsed and cond,
+                    payoff
+                  ): LSEffect
+                )
+                .reduce(_ and _)
+            )
+        )
       }
       case 136 => {
         val boost1 = args.slice(0, 4)
@@ -781,10 +794,20 @@ object LeaderSkill {
           .reduce(_ and _)
       }
       case 157 =>
-        LSComponentInfinite(
-          ConditionCross(Attribute.from(args(0))),
-          ATKBoost(args(1) / 100.0)
-        )
+        val stop = Stream.from(1, 2).find(args(_) == 0).get - 1
+        if (stop == 0)
+          ???
+        else
+          args
+            .slice(0, stop)
+            .grouped(2)
+            .map(g => {
+              LSComponentInfinite(
+                ConditionCross(Attribute.from(g(0))),
+                ATKBoost(args(1) / 100.0)
+              )
+            })
+            .reduce(_ and _)
       case 158 => {
         val minMatch = args(0)
         val conditions = conditionAttributesFromBits(args(1))
@@ -924,16 +947,10 @@ object LeaderSkill {
           .toList
         firstOf(effects)
       }
-      case 169 => {
-        val lambda = LSComponent(ConditionCombos(args(0)), _)
-        val atkPayoff =
-          if (args(1) != 0) lambda(ATKBoost(args(1) / 100.0))
-          else LSEffectNone
-        val shieldPayoff =
-          if (args(2) != 0) lambda(ShieldRegular(args(2)))
-          else LSEffectNone
-        atkPayoff and shieldPayoff
-      }
+      case 169 =>
+        getStatPayoffs(atk = args(1), shield = args(2))
+          .map(LSComponent(ConditionCombos(args(0)), _))
+          .reduce(_ and _)
       case 170 => {
         val atts = Attribute.fromBitFlag(args(0))
         val minCount = args(1)
@@ -967,23 +984,15 @@ object LeaderSkill {
           else
             atts_1.filter(_.size != 0).map(_.head)
         val minCount = args(4)
-        val atkMult = args(5) / 100.0
-        val shieldAmount = args(6)
-        val atkEffect =
-          if (atkMult != 0)
+        val payoffs = getStatPayoffs(atk = args(5), shield = args(6))
+        payoffs
+          .map(payoff =>
             LSComponent(
               ConditionColorsMatched(atts = atts, matchRequirement = minCount),
-              ATKBoost(atkMult)
+              payoff
             )
-          else LSEffectNone
-        val shieldEffect =
-          if (shieldAmount != 0)
-            LSComponent(
-              ConditionColorsMatched(atts = atts, matchRequirement = minCount),
-              ShieldRegular(shieldAmount)
-            )
-          else LSEffectNone
-        atkEffect and shieldEffect
+          )
+          .reduce(_ and _)
       }
       case 175 => {
         if (args(1) != 0 || args(2) != 0) {
@@ -1045,30 +1054,25 @@ object LeaderSkill {
         val minMatch = args(1)
         val atkMult = args(2)
         val shieldAmount = args(3)
-        val payoffs = List((i: Int) => ATKBoost(i / 100.0), ShieldRegular(_))
-          .zip(List(atkMult, shieldAmount).filter(_ != 0))
-          .map(_(_))
-        colors
-          .map(ConditionAttribute(_))
-          .cartesian(payoffs)
-          .map((c, p) => LSComponent(c, p): LSEffect)
-          .reduce(_ and _)
+        val payoffs = getStatPayoffs(atk = args(2), shield = args(3))
+        firstOf(
+          colors
+            .map(att => ConditionOrbsLinked(numOrbs = minMatch, att = att))
+            .map(cond =>
+              payoffs
+                .map(payoff => LSComponent(cond, payoff): LSEffect)
+                .reduce(_ and _)
+            )
+        )
       }
       case 183 => {
         // cbits, tbits, >=thresh, atk, shield, [<thresh,atk, rcv]
         val conditions = conditionAttributesFromBits(
           args(0)
         ) ++ conditionTypesFromBits(args(1))
-        val payoffs1 = List((a: Int) => ATKBoost(a / 100.0), ShieldRegular(_))
-          .zip(args.slice(3, 5))
-          .filter(_._2 != 0)
-          .map(_(_))
+        val payoffs1 = getStatPayoffs(atk = args(3), shield = args(4))
         val hpThreshold1 = args(2)
-
-        val payoffs2 = List((a: Int) => ATKBoost(a / 100.0), ShieldRegular(_))
-          .zip(args.slice(6, 7))
-          .filter(_._2 != 0)
-          .map(_(_))
+        val payoffs2 = getStatPayoffs(atk = args(6), shield = args(7))
         val hpThreshold2 = args(5)
 
         val effect1 = conditions
@@ -1113,11 +1117,13 @@ object LeaderSkill {
         val payoffs = getStatPayoffs(hp = args(3), atk = args(4), rcv = args(5))
         val conditions = atts ++ types
 
-        payoffs
-          .flatMap(payoff =>
-            conditions.map(cond => LSComponent(cond, payoff): LSEffect)
+        firstOf(
+          conditions.map(cond =>
+            payoffs
+              .map(payoff => LSComponent(cond, payoff): LSEffect)
+              .reduce(_ and _)
           )
-          .reduce(_ and _) and (
+        ) and (
           if (time > 0) LSPassive(TimeExtend(time)) else LSEffectNone
         )
       }
@@ -1134,17 +1140,28 @@ object LeaderSkill {
           .getOrElse(LSEffectNone)
       }
 
-      case 192 => LSEffectNone
+      case 192 => {
+        val atts = Attribute.fromBitFlag(args(0))
+        val minLinked = args(1)
+        val payoffs = getStatPayoffs(atk = args(2)) ++ {
+          if (args(3) != 0) List(AddCombos(args(3))) else List()
+        }
+        atts
+          .cartesian(payoffs)
+          .map((att, payoff) =>
+            LSComponent(
+              ConditionOrbsLinked(numOrbs = minLinked, att = att),
+              payoff
+            )
+          )
+          .reduce(_ and _)
+      }
+
       case 193 => {
         val atts = Attribute.fromBitFlag(args(0))
         val conditions = atts.map(ConditionLMatched(_))
-        val payoffs = List(
-          (i: Int) => ATKBoost(i / 100.0),
-          (i: Int) => RCVBoost(i / 100.0),
-          ShieldRegular(_)
-        ).zip(args.slice(1, 4))
-          .filter(_._2 != 0)
-          .map(_(_))
+        val payoffs =
+          getStatPayoffs(atk = args(1), rcv = args(2), shield = args(3))
         conditions.cartesian(payoffs).map(LSComponent(_, _)).reduce(_ and _)
       }
       case 194 => {
@@ -1152,15 +1169,15 @@ object LeaderSkill {
         val matchesRequired = args(1)
         val atkMult = args(2)
         val addedCombos = args(3)
-        val condition =
-          LSComponent(ConditionColorsMatched(colors, matchesRequired), _)
-        Option(atkMult)
-          .filter(mult => mult != 0 && mult != 100)
-          .map(_ / 100.0)
-          .map(ATKBoost(_))
-          .map(condition)
-          .getOrElse(LSEffectNone) and
-          condition(AddCombos(addedCombos))
+        (getStatPayoffs(atk = args(2)) :+ AddCombos(addedCombos))
+          .map(
+            LSComponent(
+              ConditionColorsMatched(colors, matchesRequired),
+              _
+            ): LSEffect
+          )
+          .reduceOption(_ and _)
+          .getOrElse(LSEffectNone)
       }
       case 197 => LSPassive(VoidPoisonDamage)
       case 198 => {

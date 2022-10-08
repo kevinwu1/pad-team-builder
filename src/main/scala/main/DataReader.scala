@@ -6,6 +6,8 @@ import play.api.libs.json._
 import skills.ActiveSkill
 import skills.LeaderSkill
 import scala.util.Random
+import skills.effects._
+import skills.effects.leader.LSEffectNone
 
 object DataReader {
   def main(arg: Array[String]): Unit = {
@@ -15,7 +17,10 @@ object DataReader {
     val skillData = readSkillData(skillDataFile)
     println(skillData.length)
     println("carddata length: " + cardData.size)
+    testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
+    val big = cards.maxBy(_.leaderSkill.effect.toString.size)
+    // println(big.leaderSkill)
   }
 
   def parseAllCardsFromJsonCardData(
@@ -24,6 +29,32 @@ object DataReader {
   ): Array[Card] = {
     cardData.map(jcd => {
       Card.cardFromJsonCardData(jcd, skillData, cardData)
+    })
+  }
+
+  def testLSParsing3(
+      cardData: Array[JsonCardData],
+      skillData: Array[JsonSkillData]
+  ) = {
+    (94 to 100).foreach(ind => {
+      val theCard = cardData(Random(ind).between(0, cardData.size))
+      val theskillData = skillData(theCard.leaderSkillId)
+      val skill =
+        LeaderSkill.fromJson(theCard.leaderSkillId, skillData, cardData)
+      if (skill.effect != LSEffectNone) {
+        println(s"index $ind")
+        println(
+          s"#${theCard.id}-${theCard.name}: LS id = ${theCard.leaderSkillId}: internal skill id = ${theskillData.internalEffectId}"
+        )
+        println("Desc: ")
+        println(skillData(theCard.leaderSkillId).desc)
+        println()
+        println("Parsed: ")
+        println(skill.effect)
+        println()
+        println()
+        println()
+      }
     })
   }
 
