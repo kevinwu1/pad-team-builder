@@ -54,3 +54,41 @@ case class DynamicSelectEffect(effects: List[LSEffect])
           .map((e, i) => s"${i + 1}. $e")
           .mkString("\n")}\n]"
     )
+
+case class LSAttOrTypeScaling(
+    atts: List[Attribute],
+    types: List[CardType],
+    hpScaling: Double,
+    atkScaling: Double,
+    rcvScaling: Double
+) extends LSEffect({
+      val payoffs =
+        List("hp", "atk", "rcv")
+          .zip(List(hpScaling, atkScaling, rcvScaling))
+          .filter(_._2 != 0)
+      {
+        if (types.size != 0)
+          payoffs
+            .map(t => s"${scalingHelper(t._2, types, "type")} ${t._1}. ")
+            .mkString("\n")
+        else ""
+      }
+      + {
+        if (atts.size != 0)
+          payoffs
+            .map(t => s"${scalingHelper(t._2, atts, "atts")} ${t._1}. ")
+            .mkString("\n")
+        else ""
+      }
+    })
+
+private def scalingHelper(
+    scale: Double,
+    types: List[CardType | Attribute],
+    keyword: String
+): String = {
+  if (types.size == 0)
+    ""
+  else
+    s"1+($scale*(${types.map(t => s"# of $t $keyword").mkString(" + ")}))x"
+}

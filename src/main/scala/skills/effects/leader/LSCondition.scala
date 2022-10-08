@@ -70,6 +70,11 @@ case class ConditionOrbsLinked(numOrbs: Int, att: Attribute)
       s"at least $numOrbs linked $att orbs"
     )
 
+case class ConditionOrbsLinkedExact(numOrbs: Int, att: Attribute)
+    extends LSCondition(
+      s"exactly $numOrbs linked $att orbs"
+    )
+
 case class ConditionCardOnTeam(cardId: Int)
     extends LSCondition(
       s"$cardId is on the team"
@@ -103,4 +108,29 @@ case class ConditionOrbsRemaining(numOrbs: Int)
 case class ConditionLMatched(att: Attribute)
     extends LSCondition(
       s"$att L matched"
+    )
+
+object ConditionCoop
+    extends LSCondition(
+      s"in multiplayer mode"
+    )
+
+case class Healed(amt: Int)
+    extends LSCondition(
+      s"$amt healed"
+    )
+
+object ConditionAllPixel
+    extends LSCondition(
+      s"all subs are pixel cards"
+    )
+
+object ConditionAllRevo
+    extends LSCondition(
+      s"all subs are reincarnated cards"
+    )
+
+case class ConditionTeamRarity(maxRarity: Int)
+    extends LSCondition(
+      s"total team rarity is maxRarity or less"
     )

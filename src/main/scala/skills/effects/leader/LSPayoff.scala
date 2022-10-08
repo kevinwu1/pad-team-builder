@@ -78,9 +78,14 @@ object DrummingSound
       s"A drumming sound is made when orbs are moved. "
     )
 
+case class DropRateBoost(rate: Double)
+    extends LSPayoff(
+      s"${rate}x coin drop rate when entering a dungeon as Leader"
+    )
+
 case class CoinBoost(rate: Double)
     extends LSPayoff(
-      s"1.5x coin drop rate when entering a dungeon as Leader"
+      s"${rate}x coin drop rate when entering a dungeon as Leader"
     )
 
 case class CounterAttack(mult: Double, att: Attribute)
@@ -116,4 +121,24 @@ case class AddCombos(numCombos: Int)
 case class FixedTime(seconds: Double)
     extends LSPayoff(
       s"fixes move time at $seconds seconds. "
+    )
+
+object VoidPoisonDamage
+    extends LSPayoff(
+      s"voids poison damage. "
+    )
+
+case class MinimumMatch(min: Int)
+    extends LSPayoff(
+      s"cannot clear matches of ${min - 1} or fewer orbs. "
+    )
+
+case class PayoffAwokenBindClear(turns: Int)
+    extends LSPayoff(
+      s"awoken bind reduce by $turns turns. "
+    )
+
+case class AddAwakening(awk: Awakening)
+    extends LSPayoff(
+      s"adds $awk awakening. "
     )

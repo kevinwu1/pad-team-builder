@@ -28,7 +28,15 @@ object CardType {
     }
   }
 
-  def fromBitFlag(bits: Long): List[CardType] = {
+  def fromBitFlag(bits: Int): List[CardType] = {
     CardType.values.filter(att => (bits & (1 << att.ordinal)) != 0).toList
+  }
+
+  def firstFromBitFlag(bits: Int): CardType = {
+    val types = fromBitFlag(bits)
+    if (types.size == 1)
+      types.head
+    else
+      ???
   }
 }

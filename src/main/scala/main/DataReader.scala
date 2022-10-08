@@ -15,13 +15,13 @@ object DataReader {
     val skillData = readSkillData(skillDataFile)
     println(skillData.length)
     println("carddata length: " + cardData.size)
-    val cards = testLSParsing(cardData, skillData)
+    val cards = parseAllCardsFromJsonCardData(cardData, skillData)
   }
 
   def parseAllCardsFromJsonCardData(
       cardData: Array[JsonCardData],
       skillData: Array[JsonSkillData]
-  ) = {
+  ): Array[Card] = {
     cardData.map(jcd => {
       Card.cardFromJsonCardData(jcd, skillData, cardData)
     })
@@ -31,8 +31,8 @@ object DataReader {
       cardData: Array[JsonCardData],
       skillData: Array[JsonSkillData]
   ) = {
-    val target = 165
-    (0 to 4000).foreach(i => {
+    val target = 229
+    (0 to 9000).foreach(i => {
       val theCard = cardData(i)
       val theskillData = skillData(theCard.leaderSkillId)
       val matchesTarget =
@@ -71,7 +71,7 @@ object DataReader {
       cardData: Array[JsonCardData],
       skillData: Array[JsonSkillData]
   ) = {
-    (2389 to 3000).foreach(i => {
+    (8662 to 10000).foreach(i => {
       val theCard = cardData(i)
       val theskillData = skillData(theCard.leaderSkillId)
       println(

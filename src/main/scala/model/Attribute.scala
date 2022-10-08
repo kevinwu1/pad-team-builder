@@ -17,8 +17,8 @@ object Attribute {
     Attribute.values.filter(att => (bits & (1 << att.ordinal)) != 0).toList
   }
 
-  def firstFromBitFlag(bitFlag: Int): Attribute = {
-    val atts = fromBitFlag(bitFlag)
+  def firstFromBitFlag(bits: Int): Attribute = {
+    val atts = fromBitFlag(bits)
     if (atts.size != 1)
       ???
     else

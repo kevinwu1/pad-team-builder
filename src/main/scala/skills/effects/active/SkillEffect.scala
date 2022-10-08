@@ -179,6 +179,14 @@ case class OrbChangeColumn(
 ) extends OrbChange
     with SkillEffect(s"Changes the $column column into $att. ")
 
+case class OrbChangeColumnRandom(
+    column: Column,
+    atts: List[Attribute]
+) extends OrbChange
+    with SkillEffect(
+      s"Changes the $column column into a random mix of ${atts.mkString(", ")}. "
+    )
+
 enum Row(desc: String) {
   case T extends Row("top")
   case T2 extends Row("2nd from the top")
