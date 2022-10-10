@@ -23,6 +23,7 @@ scala syntax
 scala metals
     import build after install
 scala sbt
+live server
 
 vscode setup:
 tab size 2
@@ -36,3 +37,10 @@ switch to using sbt instead of bloop
 
 general setup:
 download card data and skill data im not committing those massive jsons
+
+npm init private 
+npm install jsdom
+
+
+in sbt shell, ~frontend/fastLinkJS
+right click index.html > open with live server
