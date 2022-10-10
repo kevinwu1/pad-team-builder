@@ -6,13 +6,12 @@ lazy val buildSettings = Seq(
 
 lazy val core = project
   .in(file("core"))
-  .enablePlugins(ScalaJSPlugin)
+  .enablePlugins(ScalaJSPlugin) // this is needed apparently
   .settings(buildSettings)
   .settings(
     name := "pad team builder",
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
-    libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC6",
-    scalaJSUseMainModuleInitializer := true
+    libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC6"
   )
 
 lazy val frontend = project
