@@ -49,7 +49,7 @@ object PadTeamBuilder {
           .as[JsArray]
           .value
           .map(card => {
-            JsonParsing.cardFromJson(card.as[JsArray].value.toList)
+            JsonParsing.jsonCardDataFromJson(card.as[JsArray].value.toList)
           })
         val cardsArr = cards.toArray
         println(cardsArr)

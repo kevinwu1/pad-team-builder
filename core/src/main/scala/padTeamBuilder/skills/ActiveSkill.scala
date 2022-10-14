@@ -17,7 +17,7 @@ case class ActiveSkill(
 }
 
 object ActiveSkill {
-  val NO_SKILL = ActiveSkill("None", NoEffect, 0, 0)
+  val NO_SKILL = ActiveSkill("None", NoEffect(), 0, 0)
 
   def fromJson(
       jsonId: Int,
@@ -42,19 +42,19 @@ object ActiveSkill {
         ImmediateDamage(
           DMultiplier(args(1) / 100),
           DAttribute(Attribute.from(args(0))),
-          DAll
+          DAll()
         )
       case 1 =>
         ImmediateDamage(
           DFixed(args(1)),
           DAttribute(Attribute.fromOrdinal(args(0))),
-          DAll
+          DAll()
         )
       case 2 =>
         ImmediateDamage(
           DMultiplier(args(0) / 100),
-          DInherit,
-          DSingle
+          DInherit(),
+          DSingle()
         )
       case 3 => ShieldAll(percent = args(1), turns = args(0))
       case 4 => Poison(args(0) / 100)
@@ -64,7 +64,7 @@ object ActiveSkill {
       case 8 => HealFlat(args(0))
       case 9 =>
         OrbChangeAtoB(from = Attribute.from(args(0)), Attribute.from(args(1)))
-      case 10 => Refresh
+      case 10 => Refresh()
       case 18 => Delay(args(0))
       case 19 => DefenseBreak(percent = args(1), turns = args(0))
       case 20 =>
@@ -85,15 +85,15 @@ object ActiveSkill {
       case 35 =>
         ImmediateDamage(
           DMultiplier(args(0) / 100),
-          DInherit,
-          DSingle,
+          DInherit(),
+          DSingle(),
           Some(args(1))
         )
       case 37 =>
         ImmediateDamage(
           DMultiplier(args(1) / 100),
           DAttribute(Attribute.from(args(0))),
-          DSingle
+          DSingle()
         )
       case 42 =>
         ImmediateDamage(
@@ -112,29 +112,29 @@ object ActiveSkill {
       case 55 =>
         ImmediateDamage(
           DFixed(args(0)),
-          DTrue,
-          DSingle
+          DTrue(),
+          DSingle()
         )
       case 56 =>
         ImmediateDamage(
           DFixed(args(0)),
-          DTrue,
-          DAll
+          DTrue(),
+          DAll()
         )
       case 58 =>
         ImmediateDamage(
           DRange(args(1) / 100, args(2) / 100),
           DAttribute(Attribute.from(args(0))),
-          DAll
+          DAll()
         )
       case 59 =>
         ImmediateDamage(
           DRange(args(1) / 100, args(2) / 100),
           DAttribute(Attribute.from(args(0))),
-          DSingle
+          DSingle()
         )
       case 60 =>
-        CounterAttack(
+        CounterAttackSkill(
           multiplier = args(1) / 100,
           att = Attribute.from(args(2)),
           turns = args(0)
@@ -145,22 +145,22 @@ object ActiveSkill {
         ImmediateDamage(
           DRange(args(1) / 100, args(2) / 100),
           DAttribute(Attribute.from(args(0))),
-          DSingle
-        ) and SuicideFull
+          DSingle()
+        ) and SuicideFull()
       case 85 =>
         ImmediateDamage(
           DRange(args(1) / 100, args(2) / 100),
           DAttribute(Attribute.from(args(0))),
-          DAll
+          DAll()
         ) and
-          SuicideFull
+          SuicideFull()
       case 86 =>
         ImmediateDamage(
           DFixed(args(1)),
           DAttribute(Attribute.from(args(0))),
-          DSingle
+          DSingle()
         ) and
-          (if (args(3) == 0) SuicideFull else SuicidePartial(100 - args(3)))
+          (if (args(3) == 0) SuicideFull() else SuicidePartial(100 - args(3)))
       case 88 =>
         SpikeType(
           multiplier = args(2) / 100.0,
@@ -195,18 +195,18 @@ object ActiveSkill {
           )
           .reduceRight(_ and _)
       }
-      case 93 => LeadSwap
+      case 93 => LeadSwapThisCard()
       case 110 =>
         ImmediateDamage(
           DGrudge(hpMaxMult = args(2) / 100, hp1Mult = args(3) / 100),
           DAttribute(Attribute.from(args(1))),
-          if (args(0) == 0) DAll else DSingle
+          if (args(0) == 0) DAll() else DSingle()
         )
       case 115 =>
         ImmediateDamage(
           DMultiplier(args(1) / 100),
           DAttribute(Attribute.from(args(0))),
-          DSingle,
+          DSingle(),
           Some(args(2))
         )
       case 116 => {
@@ -225,7 +225,7 @@ object ActiveSkill {
           AwokenBindClear(_)
         )
           .zip(args.slice(0, 5))
-          .map(t => if (t._2 != 0) t._1(t._2) else NoEffect)
+          .map(t => if (t._2 != 0) t._1(t._2) else NoEffect())
         (effects.tail :+ effects.head)
           .reduceRight(_ and _)
       case 118 => Random(args.map(fromJson(_, skillData, cardData)))
@@ -274,13 +274,13 @@ object ActiveSkill {
         ImmediateDamage(
           DTeamHpMult(args(0) / 100),
           DAttribute(Attribute.from(args(2))),
-          if (args(1) == 0) DAll else DSingle
+          if (args(1) == 0) DAll() else DSingle()
         )
       case 144 =>
         ImmediateDamage(
           DTeamAtkMult(args(1) / 100, Attribute.fromBitFlag(args(0))),
           DAttribute(Attribute.from(args(3))),
-          if (args(2) == 0) DAll else DSingle
+          if (args(2) == 0) DAll() else DSingle()
         )
       case 145 => HealByTeamRCV(args(0) / 100)
       case 146 =>
@@ -319,7 +319,7 @@ object ActiveSkill {
               args(0)
             )
         }
-      case 160 => AddCombos(args(1), args(0))
+      case 160 => AddCombosSkill(args(1), args(0))
       case 161 => GravityTrue(args(0))
       case 168 =>
         SpikeScalingByAwakening(
@@ -327,10 +327,10 @@ object ActiveSkill {
           awks = List(Awakening.from(args(1))),
           turns = args(0)
         )
-      case 172 => UnlockOrbs
+      case 172 => UnlockOrbs()
       case 173 =>
-        (if (args(1) != 0) VoidAttributeAbsorb(args(0)) else NoEffect) and
-          (if (args(3) != 0) VoidDamageAbsorb(args(0)) else NoEffect)
+        (if (args(1) != 0) VoidAttributeAbsorb(args(0)) else NoEffect()) and
+          (if (args(3) != 0) VoidDamageAbsorb(args(0)) else NoEffect())
       case 176 =>
         OrbChangePattern(
           args
@@ -348,13 +348,13 @@ object ActiveSkill {
       case 188 =>
         ImmediateDamage(
           DFixed(args(0)),
-          DTrue,
-          DSingle
+          DTrue(),
+          DSingle()
         )
-      case 189 => OrbTrace
+      case 189 => OrbTrace()
       case 191 => VoidVoid(args(0))
       case 195 =>
-        if (args(0) == 0) SuicideFull else SuicidePartial(100 - args(0))
+        if (args(0) == 0) SuicideFull() else SuicidePartial(100 - args(0))
       case 196 => UnmatchableClear(args(0))
       case 202 => TransformFixed(targetId = args(0), cardData(args(0)).name)
       case 205 =>
@@ -397,7 +397,7 @@ object ActiveSkill {
           ConditionalComponentHP(hpReq = args(0), needsToBeMore = true)
         else ConditionalComponentHP(hpReq = args(1), needsToBeMore = false)
       case 226 => NailOrbSkyfall(skyfallChance = args(1), turns = args(0))
-      case 227 => LeadSwapRightMost
+      case 227 => LeadSwapRightMost()
       case 228 => {
         val turns = args(0)
         val atts = Attribute.fromBitFlag(args(1))
@@ -410,7 +410,7 @@ object ActiveSkill {
              turns = turns
            )
          else
-           NoEffect) and (
+           NoEffect()) and (
           if (args(4) != 0)
             RCVBoostByAttributeAndType(
               rcvScaling = args(4) / 100.0,
@@ -418,13 +418,13 @@ object ActiveSkill {
               types = types,
               turns = turns
             )
-          else NoEffect
+          else NoEffect()
         )
       }
       case 230 =>
         SpikeSlots(
           multiplier = args(2) / 100.0,
-          slots = CardSlot.from(args(1)),
+          slots = CardSlot.fromBitFlag(args(1)),
           args(0)
         )
       case 231 =>
@@ -435,14 +435,14 @@ object ActiveSkill {
              turns = args(0)
            )
          else
-           NoEffect) and (
+           NoEffect()) and (
           if (args(7) != 0)
             RCVBoostByAwakening(
               rcvScaling = args(7) / 100.0,
               awks = args.slice(1, 6).map(Awakening.from),
               turns = args(0)
             )
-          else NoEffect
+          else NoEffect()
         )
       case 232 =>
         EvolvingEffect(
@@ -477,7 +477,7 @@ object ActiveSkill {
         // println()
         // println()
         // println()
-        NoEffect
+        NoEffect()
       }
       case n => {
         println(s"Skill id $n not implemented.")

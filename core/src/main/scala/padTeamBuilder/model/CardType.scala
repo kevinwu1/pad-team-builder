@@ -1,6 +1,6 @@
 package padTeamBuilder.model
 
-enum CardType {
+enum CardType extends Enum[CardType] {
   case Evo,
     Balanced,
     Physical,

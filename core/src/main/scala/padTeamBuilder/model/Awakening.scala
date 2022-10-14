@@ -1,6 +1,6 @@
 package padTeamBuilder.model
 
-enum Awakening(str: String) {
+enum Awakening(str: String) extends Enum[Awakening] {
   case None extends Awakening("None")
   case EnhancedHP extends Awakening("EnhancedHP")
   case EnhancedATK extends Awakening("EnhancedATK")

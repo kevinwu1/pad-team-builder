@@ -3,11 +3,16 @@ package padTeamBuilder.skills.effects.active
 import padTeamBuilder.model._
 import padTeamBuilder.skills.ActiveSkill
 
+// sealed trait SkillEffectJson[T]() {
+//   def toJson: JsSuccess = {}
+// }
+
 //is this a monoid?
-trait SkillEffect(str: String) {
+sealed trait SkillEffect(str: String) {
   def and(other: SkillEffect): SkillEffect = {
     (this, other) match {
-      case (_, NoEffect) => this
+      case (_, NoEffect()) => this
+      case (NoEffect(), _) => other
       case (left, c: ConditionalComponent) =>
         throw new Exception(
           "ConditionalComponent can't be on the right of and in: " +
@@ -31,9 +36,7 @@ trait SkillEffect(str: String) {
   override def toString = str
 }
 
-object NoEffect extends SkillEffect("") {
-  override def and(other: SkillEffect) = other
-}
+case class NoEffect() extends SkillEffect("")
 
 case class MultiEffect(effects: List[SkillEffect])
     extends SkillEffect(
@@ -61,7 +64,7 @@ case class ChangeTheWorld(
     seconds: Int
 ) extends SkillEffect(s"Move orbs freely for ${seconds} seconds. ")
 
-case class CounterAttack(
+case class CounterAttackSkill(
     multiplier: Int,
     att: Attribute,
     turns: Int
@@ -73,7 +76,7 @@ case class SuicidePartial(percentLost: Double)
     extends Suicide
     with SkillEffect(s"HP reduced by ${percentLost}%. ")
 
-object SuicideFull extends Suicide with SkillEffect(s"HP reduced to 1. ")
+case class SuicideFull() extends Suicide with SkillEffect(s"HP reduced to 1. ")
 
 case class DefenseBreak(
     percent: Int,
@@ -92,7 +95,8 @@ sealed trait Gravity
 
 case class GravityFalse(
     percent: Int
-) extends SkillEffect(
+) extends Gravity
+    with SkillEffect(
       s"Reduce all enemies' current HP by ${percent}% of their current HP. "
     )
 
@@ -106,15 +110,18 @@ sealed trait Heal
 
 case class HealFlat(
     amount: Int
-) extends SkillEffect(s"Heal ${amount} HP. ")
+) extends Heal
+    with SkillEffect(s"Heal ${amount} HP. ")
 
 case class HealMultiplier(
     multiplier: Int
-) extends SkillEffect(s"Heal ${multiplier}x this card's RCV. ")
+) extends Heal
+    with SkillEffect(s"Heal ${multiplier}x this card's RCV. ")
 
 case class HealPercentMax(
     percent: Int
-) extends SkillEffect(s"Heal ${percent}% max HP. ")
+) extends Heal
+    with SkillEffect(s"Heal ${percent}% max HP. ")
 
 case class HealScalingByAwakening(percent: Int, awks: List[Awakening])
     extends Heal
@@ -123,7 +130,8 @@ case class HealScalingByAwakening(percent: Int, awks: List[Awakening])
     )
 
 case class HealByTeamRCV(multiplier: Int)
-    extends SkillEffect(
+    extends Heal
+    with SkillEffect(
       s"Heal ${multiplier}x of entire team's RCV. "
     )
 
@@ -158,21 +166,6 @@ case class OrbChangeFullBoard(
 ) extends SkillEffect(s"Changes all orbs to ${attribute.mkString(", ")}. ")
     with OrbChange
 
-enum Column(desc: String) {
-  case L extends Column("leftmost")
-  case L2 extends Column("2nd from the left")
-  case L3 extends Column("3rd from the left")
-  case R3 extends Column("3rd from the right")
-  case R2 extends Column("2nd from the right")
-  case R extends Column("rightmost")
-  override def toString = desc
-}
-object Column {
-  def fromBitFlag(bitFlags: Int) = {
-    Column.values.filter(att => (bitFlags & (1 << att.ordinal)) != 0).toList
-  }
-}
-
 case class OrbChangeColumn(
     column: Column,
     att: Attribute
@@ -186,20 +179,6 @@ case class OrbChangeColumnRandom(
     with SkillEffect(
       s"Changes the $column column into a random mix of ${atts.mkString(", ")}. "
     )
-
-enum Row(desc: String) {
-  case T extends Row("top")
-  case T2 extends Row("2nd from the top")
-  case C extends Row("center")
-  case B2 extends Row("2nd from the bottom")
-  case B extends Row("bottom")
-  override def toString = desc
-}
-object Row {
-  def fromBitFlag(bitFlags: Int) = {
-    Row.values.filter(att => (bitFlags & (1 << att.ordinal)) != 0).toList
-  }
-}
 
 case class OrbChangeRow(
     row: Row,
@@ -220,7 +199,7 @@ case class Poison(
     multiplier: Int
 ) extends SkillEffect(s"Poisons enemies with ${multiplier}x ATK. ")
 
-object Refresh extends SkillEffect(s"Replaces all orbs. ")
+case class Refresh() extends SkillEffect(s"Replaces all orbs. ")
 
 sealed trait RCVBoost
 case class RCVBoostMult(multiplier: Double, turns: Int)
@@ -309,20 +288,6 @@ case class SpikeScalingByAttributeAndType(
       s"1+(${dmgScaling}x) ATK for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
     )
 
-enum CardSlot(desc: String) {
-  case ThisCard extends CardSlot("this card")
-  case YourLead extends CardSlot("your leader")
-  case FriendLead extends CardSlot("friend leader")
-  case AllSubs extends CardSlot("all subs")
-  override def toString = desc
-}
-
-object CardSlot {
-  def from(bits: Int): List[CardSlot] = {
-    CardSlot.values.filter(att => (bits & (1 << att.ordinal)) != 0).toList
-  }
-}
-
 case class SpikeSlots(multiplier: Double, slots: List[CardSlot], turns: Int)
     extends Spike
     with SkillEffect(
@@ -346,11 +311,11 @@ case class TransformRandom(targets: List[(Int, String)])
     )
 
 trait LeadSwap
-object LeadSwap
+case class LeadSwapThisCard()
     extends SkillEffect(
       s"Switches places with leader. Switch back when used again. "
     )
-object LeadSwapRightMost
+case class LeadSwapRightMost()
     extends SkillEffect(
       "Switches leader and rightmost sub. Switch back when used again."
     )
@@ -421,7 +386,7 @@ case class OrbChangeMultiTarget(
       s"Changes ${sourceAtts.mkString(", ")} into a random mix of ${targetAtts.mkString(", ")}"
     )
 
-case class AddCombos(combos: Int, turns: Int)
+case class AddCombosSkill(combos: Int, turns: Int)
     extends SkillEffect(
       s"Adds $combos combo${if (combos == 1) "" else "s"} for $turns turns. "
     )
@@ -456,7 +421,7 @@ case class EnhancedSkyfall(percent: Int, turns: Int)
       s"$percent% chance for enhanced skyfall orbs for $turns turns. "
     )
 
-object OrbTrace
+case class OrbTrace()
     extends SkillEffect(
       "Unlocks all orbs. \nChanges all orbs to Fire, Water, Wood and Light. \nTraces a 3-combo path on Normal dungeons with 3-linked matches."
     )
@@ -471,7 +436,7 @@ case class AllyDelayRange(minTurns: Int, maxTurns: Int)
       s"Delays team's skills for $minTurns-$maxTurns turns. "
     )
 
-object UnlockOrbs extends SkillEffect("Unlock all orbs. ")
+case class UnlockOrbs() extends SkillEffect("Unlock all orbs. ")
 
 case class UnmatchableClear(turns: Int)
     extends SkillEffect(
@@ -483,7 +448,7 @@ case class NoSkyfall(turns: Int)
       s"No skyfall combos for $turns turns. "
     )
 
-trait ConditionalComponent
+sealed trait ConditionalComponent
 
 case class ConditionalComponentHP(hpReq: Int, needsToBeMore: Boolean)
     extends ConditionalComponent
@@ -542,4 +507,57 @@ case class NailOrbSkyfall(skyfallChance: Int, turns: Int)
 case class MaxHPMult(multiplier: Double, turns: Int)
     extends SkillEffect(
       s"${multiplier}x max HP for $turns turns. "
+    )
+
+case class ImmediateDamage(
+    amount: DAmount,
+    damageType: DType,
+    target: DTarget,
+    drain: Option[Int] = None
+) extends SkillEffect({
+      val drainText =
+        drain.map(p => s" and heal $p% of the damage").getOrElse("")
+      s"Inflicts $amount $damageType on $target$drainText. "
+    })
+
+sealed trait DAmount(str: String) {
+  override def toString = str
+}
+case class DFixed(amount: Int) extends DAmount(amount.toString)
+case class DMultiplier(multiplier: Int) extends DAmount(s"${multiplier}x ATK")
+case class DRange(floor: Int, ceil: Int)
+    extends DAmount(
+      if (floor == ceil) DMultiplier(floor).toString
+      else s"${floor}x-${ceil}x ATK"
+    )
+case class DGrudge(hpMaxMult: Int, hp1Mult: Int)
+    extends DAmount(s"[${hpMaxMult}x at full HP, up to ${hp1Mult}x at 1 HP]")
+case class DTeamAtkMult(multiplier: Int, atts: List[Attribute])
+    extends DAmount(
+      s"[${multiplier}x of entire team's ${atts.mkString(" and ")} ATK]"
+    )
+case class DTeamHpMult(multiplier: Int)
+    extends DAmount(
+      s"${multiplier}x of entire team's HP"
+    )
+
+sealed trait DType(str: String) {
+  override def toString = str
+}
+case class DAttribute(attribute: Attribute)
+    extends DType(attribute.toString + " damage")
+case class DTrue() extends DType("true damage")
+case class DInherit() extends DType("damage")
+
+sealed trait DTarget(str: String) {
+  override def toString = str
+}
+case class DSingle() extends DTarget(s"1 enemy")
+case class DAll() extends DTarget(s"all enemies")
+case class DAttributeTarget(attribute: Attribute)
+    extends DTarget(s"$attribute enemies")
+
+case class TimeReducedForTop2(args: List[Int])
+    extends SkillEffect(
+      s"Orb move time halved for 1 turn for the top 2 ranked players"
     )

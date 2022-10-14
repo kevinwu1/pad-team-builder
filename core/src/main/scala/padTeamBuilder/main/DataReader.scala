@@ -8,10 +8,13 @@ import padTeamBuilder.skills.ActiveSkill
 import padTeamBuilder.skills.effects._
 import padTeamBuilder.skills.effects.leader.LSEffectNone
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import scala.util.Random
+import java.io.PrintStream
 
 object DataReader {
   def main(arg: Array[String]): Unit = {
+
     val cardDataFile = "download_card_data.json"
     val skillDataFile = "download_skill_data.json"
     val cardData = readCardData(cardDataFile)
@@ -20,9 +23,11 @@ object DataReader {
     println("carddata length: " + cardData.size)
     testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
+    writeAllCards(cards, "parsed_cards.json")
+  }
 
-    val big = cards.maxBy(_.leaderSkill.effect.toString.size)
-    println(big.leaderSkill)
+  def writeAllCards(cards: Array[Card], path: String) = {
+    new PrintStream(path).print(JsonParsing.cardsToJson(cards))
   }
 
   def parseAllCardsFromJsonCardData(
@@ -145,7 +150,7 @@ object DataReader {
       .as[JsArray]
       .value
       .map(card => {
-        JsonParsing.cardFromJson(card.as[JsArray].value.toList)
+        JsonParsing.jsonCardDataFromJson(card.as[JsArray].value.toList)
       })
     cards.toArray
   }
@@ -158,7 +163,7 @@ object DataReader {
       .value
       .zipWithIndex
       .map((card, ind) => {
-        JsonParsing.skillFromJson(card.as[JsArray].value.toList, ind)
+        JsonParsing.jsonSkillDataFromJson(card.as[JsArray].value.toList, ind)
       })
     skills.toArray
   }
