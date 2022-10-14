@@ -13,8 +13,7 @@ import scala.util.Random
 import java.io.PrintStream
 
 object DataReader {
-  def main(arg: Vector[String]): Unit = {
-
+  def main(arg: Array[String]): Unit = {
     val cardDataFile = "download_card_data.json"
     val skillDataFile = "download_skill_data.json"
     val cardData = readCardData(cardDataFile)

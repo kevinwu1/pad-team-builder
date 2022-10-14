@@ -6,7 +6,7 @@ lazy val buildSettings = Seq(
 Global / semanticdbEnabled := true
 lazy val core = project
   .in(file("core"))
-  .enablePlugins(ScalaJSPlugin) // this is needed apparently
+  // .enablePlugins(ScalaJSPlugin) // this is needed apparently
   .settings(buildSettings)
   .settings(
     scalacOptions := Seq("Ymacro-debug-lite", "-deprecation"),

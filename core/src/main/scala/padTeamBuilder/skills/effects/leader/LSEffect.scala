@@ -233,7 +233,7 @@ sealed trait LSPayoff(str: String) {
 }
 
 case class LSPayoffNone() extends LSPayoff("no effect")
-sealed trait StatBoost extends LSPayoff
+sealed trait StatBoost
 case class HPBoost(mult: Double)
     extends StatBoost
     with LSPayoff(

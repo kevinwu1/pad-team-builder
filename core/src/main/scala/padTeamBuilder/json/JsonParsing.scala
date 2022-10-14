@@ -212,8 +212,7 @@ object JsonParsing {
     Json.format[CardMiscStats]
 
 //leader skills
-
-// i dont know why this is unreachable case, probably some play json macro fuckery
+  implicit val leaderSkillFormat: Format[LeaderSkill] = Json.format[LeaderSkill]
   implicit val formatLSEffect: Format[LSEffect] = Json.format[LSEffect]
   implicit val formatLSCondition: Format[LSCondition] = Json.format[LSCondition]
   implicit val formatLSPayoff: Format[LSPayoff] = Json.format[LSPayoff]
@@ -323,7 +322,7 @@ object JsonParsing {
       (JsPath \ "subatt").write[Attribute] and
       (JsPath \ "types").write[List[CardType]] and
       (JsPath \ "activeSkill").write[ActiveSkill] and
-      // (JsPath \ "leaderSkill").write[LeaderSkill] and
+      (JsPath \ "leaderSkill").write[LeaderSkill] and
       (JsPath \ "awakenings").write[List[Awakening]] and
       (JsPath \ "superAwakenings").write[List[Awakening]] and
       (JsPath \ "isInheritable").write[Boolean] and
@@ -339,7 +338,7 @@ object JsonParsing {
       card.subatt,
       card.types,
       card.activeSkill,
-      // card.leaderSkill,
+      card.leaderSkill,
       card.awakenings,
       card.superAwakenings,
       card.isInheritable,
