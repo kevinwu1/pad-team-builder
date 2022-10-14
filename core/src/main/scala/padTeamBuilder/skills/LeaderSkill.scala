@@ -5,7 +5,7 @@ import padTeamBuilder.model._
 import padTeamBuilder.skills.effects.active.ShieldAttribute
 
 case class LeaderSkill(name: String, effect: LSEffect) {}
-val NO_LS = LeaderSkill("None", LSEffectNone)
+val NO_LS = LeaderSkill("None", LSEffectNone())
 
 object LeaderSkill {
   def fromJson(
@@ -28,9 +28,9 @@ object LeaderSkill {
     val args = SafeList(jsd.args)
     val effect: LSEffect = jsd.internalEffectId match {
       case 0 =>
-        LSEffectNone
+        LSEffectNone()
       case 3 =>
-        LSEffectNone // wtf this is an active skill, why does 207934 have this as a LS????
+        LSEffectNone() // wtf this is an active skill, why does 207934 have this as a LS????
       case 11 =>
         LSComponent(
           ConditionAttribute(Attribute.from(args(0))),
@@ -38,12 +38,12 @@ object LeaderSkill {
         )
       case 12 =>
         LSComponent(
-          ConditionMatchingAnyOrbs,
+          ConditionMatchingAnyOrbs(),
           BonusAttackScaling(ratio = args(0) / 100.0)
         )
       case 13 =>
         LSComponent(
-          ConditionMatchingAnyOrbs,
+          ConditionMatchingAnyOrbs(),
           AutoHealScaling(ratio = args(0) / 100.0)
         )
       case 14 =>
@@ -53,7 +53,7 @@ object LeaderSkill {
             isGreater = true,
             allowEqual = true
           ),
-          Resolve
+          Resolve()
         )
       case 15 => LSPassive(TimeExtend(seconds = args(0) / 100.0))
       case 16 => LSPassive(ShieldRegular(args(0)))
@@ -99,7 +99,7 @@ object LeaderSkill {
           .map(ct => LSComponent(ConditionType(ct), ATKBoost(args(2) / 100.0)))
           .reduce(_ and _)
       case 33 =>
-        LSPassive(DrummingSound)
+        LSPassive(DrummingSound())
       case 36 =>
         List(args(0), args(1))
           .map(Attribute.from)
@@ -131,7 +131,7 @@ object LeaderSkill {
             ): LSEffect
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 40 =>
         args
           .slice(0, 2)
@@ -171,7 +171,7 @@ object LeaderSkill {
             ): LSEffect
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 45 =>
         getStatPayoffs(
           hp = args(1),
@@ -196,7 +196,7 @@ object LeaderSkill {
           ConditionAttribute(Attribute.from(args(0))),
           RCVBoost(args(1) / 100.0)
         )
-      case 50 => LSEffectNone // active skill, card 207907
+      case 50 => LSEffectNone() // active skill, card 207907
       case 53 => LSPassive(DropRateBoost(args(0) / 100.0))
       case 54 => LSPassive(CoinBoost(args(0) / 100.0))
       case 61 => {
@@ -311,7 +311,7 @@ object LeaderSkill {
               .map(payoff => LSComponent(cond, payoff))
           )
           .reduce(_ and _)
-      case 90 => LSEffectNone // Active skill, 207892
+      case 90 => LSEffectNone() // Active skill, 207892
       case 94 =>
         getAtkRcvPayoffsConditional(
           mults = List(args(4), args(4)),
@@ -328,7 +328,7 @@ object LeaderSkill {
             ): LSEffect
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 95 =>
         getAtkRcvPayoffsConditional(
           mults = List(args(4), args(4)),
@@ -345,7 +345,7 @@ object LeaderSkill {
             ): LSEffect
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 96 =>
         getAtkRcvPayoffsConditional(
           mults = List(args(4), args(4)),
@@ -362,7 +362,7 @@ object LeaderSkill {
             ): LSEffect
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 97 =>
         getAtkRcvPayoffsConditional(
           mults = List(args(4), args(4)),
@@ -379,7 +379,7 @@ object LeaderSkill {
             ): LSEffect
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 98 => {
         val minCombo = args(0)
         val baseMult = args(1) / 100.0
@@ -404,12 +404,12 @@ object LeaderSkill {
         )
           .map(payoff =>
             LSComponent(
-              ConditionSkillUsed,
+              ConditionSkillUsed(),
               payoff
             ): LSEffect
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 101 =>
         LSComponent(ConditionCombosExact(args(0)), ATKBoost(args(1) / 100.0))
       case 103 => {
@@ -435,7 +435,7 @@ object LeaderSkill {
               )
           )
           .reduceOption(_ and _)
-          .getOrElse(LSEffectNone)
+          .getOrElse(LSEffectNone())
       case 105 =>
         getStatPayoffs(atk = args(1), rcv = args(0))
           .map(LSPassive(_))
@@ -450,7 +450,7 @@ object LeaderSkill {
              conditionAttributesFromBits(args(1))
                .map(cond => LSComponent(cond, ATKBoost(args(2))))
                .reduce(_ and _)
-           } else LSEffectNone)
+           } else LSEffectNone())
       case 108 =>
         LSPassive(HPBoost(args(0) / 100.0)) and
           LSComponent(
@@ -490,8 +490,8 @@ object LeaderSkill {
               .map(payoff => LSComponent(cond, payoff))
           )
           .reduce(_ and _)
-      case 115 => LSEffectNone
-      case 116 => LSEffectNone
+      case 115 => LSEffectNone()
+      case 116 => LSEffectNone()
       case 119 | 159 => {
         val atts = Attribute.fromBitFlag(args(0))
         val minMatch = args(1)
@@ -586,10 +586,10 @@ object LeaderSkill {
             )
           )
           .reduce(_ and _)
-      case 126 => LSEffectNone
-      case 128 => LSEffectNone
+      case 126 => LSEffectNone()
+      case 128 => LSEffectNone()
       case 129 => {
-        if (args.arr == List(8, 0, 100)) LSEffectNone
+        if (args.arr == List(8, 0, 100)) LSEffectNone()
         else {
           val atts = conditionAttributesFromBits(args(0))
           val types = conditionTypesFromBits(args(1))
@@ -601,7 +601,7 @@ object LeaderSkill {
           combineConditionsAndPayoffs(conditions, payoffs) and resistAtts
             .map(att => LSPassive(ShieldElement(resistance, att)): LSEffect)
             .reduceOption(_ and _)
-            .getOrElse(LSEffectNone)
+            .getOrElse(LSEffectNone())
         }
       }
       case 130 => {
@@ -644,13 +644,13 @@ object LeaderSkill {
           )
         )
       }
-      case 132 => LSEffectNone
+      case 132 => LSEffectNone()
       case 133 => {
         val atts = conditionAttributesFromBits(args(0))
         val types = conditionTypesFromBits(args(1))
         val payoffs = getStatPayoffs(atk = args(2), rcv = args(3))
         val conditions = atts ++ types
-        combineConditionsAndPayoffs(conditions, payoffs, ConditionSkillUsed)
+        combineConditionsAndPayoffs(conditions, payoffs, ConditionSkillUsed())
       }
       case 136 => {
         val boost1 = args.slice(0, 4)
@@ -714,14 +714,14 @@ object LeaderSkill {
           )
           .reduce(_ and _)
       }
-      case 141 => LSEffectNone
+      case 141 => LSEffectNone()
       case 148 => LSPassive(RankExpBoost(args(0) / 100.0))
       case 149 =>
         LSComponent(
           ConditionOrbsLinkedExact(numOrbs = 4, att = Attribute.HEART),
           RCVBoost(args(0) / 100.0)
         )
-      case 150 => LSComponent(ConditionSparkle, ATKBoost(args(1) / 100.0))
+      case 150 => LSComponent(ConditionSparkle(), ATKBoost(args(1) / 100.0))
       case 151 =>
         getStatPayoffs(atk = args(0), rcv = args(1), shield = args(2))
           .map(LSComponent(ConditionCross(Attribute.HEART), _))
@@ -733,11 +733,11 @@ object LeaderSkill {
         combineConditionsAndPayoffs(
           conditions,
           payoffs,
-          ConditionCoop
+          ConditionCoop()
         )
       }
       case 157 =>
-        val stop = Stream.from(1, 2).find(args(_) == 0).get - 1
+        val stop = LazyList.from(1, 2).find(args(_) == 0).get - 1
         if (stop == 0)
           ???
         else
@@ -766,7 +766,7 @@ object LeaderSkill {
         )
       }
       // case 159 => see case 119
-      case 162 => LSPassive(Board7x6)
+      case 162 => LSPassive(Board7x6())
       case 163 => {
         val conditions = conditionAttributesFromBits(args(0))
           ++ conditionTypesFromBits(args(1))
@@ -776,7 +776,7 @@ object LeaderSkill {
                   .fromBitFlag(args(5))
                   .map(att => ShieldElement(args(6), att))
               } else List())
-        LSPassive(NoSkyfall) and combineConditionsAndPayoffs(
+        LSPassive(NoSkyfall()) and combineConditionsAndPayoffs(
           conditions,
           payoffs
         )
@@ -914,7 +914,7 @@ object LeaderSkill {
              ShieldRegular(shieldAmount)
            )
          else
-           LSEffectNone) and
+           LSEffectNone()) and
           firstOf(effects)
       }
       case 171 => {
@@ -965,8 +965,8 @@ object LeaderSkill {
           getStatPayoffs(hp = args(2), atk = args(3), rcv = args(4))
             .flatMap(payoff => conditions.map(LSComponent(_, payoff): LSEffect))
             .reduceOption(_ and _)
-            .getOrElse(LSEffectNone)
-        LSPassive(NoSkyfall) and passiveEffects and firstOf(scalingEffects)
+            .getOrElse(LSEffectNone())
+        LSPassive(NoSkyfall()) and passiveEffects and firstOf(scalingEffects)
       }
       case 178 => {
         // seconds,cbits,tbits,hp,atk,rcv,shieldcolours,shield
@@ -983,9 +983,9 @@ object LeaderSkill {
           shieldAtts
             .map(e => LSPassive(ShieldElement(shieldAmt, e)): LSEffect)
             .reduceOption(_ and _)
-            .getOrElse(LSEffectNone)
+            .getOrElse(LSEffectNone())
       }
-      case 179 => LSEffectNone
+      case 179 => LSEffectNone()
       case 182 => {
         val colors = Attribute.fromBitFlag(args(0))
         val minMatch = args(1)
@@ -1028,10 +1028,10 @@ object LeaderSkill {
               allowEqual = true
             )
           )
-        } else LSEffectNone
+        } else LSEffectNone()
         effect1 and effect2
       }
-      case 184 => LSEffectNone
+      case 184 => LSEffectNone()
 
       case 185 => {
         val time = args(0) / 100.0
@@ -1044,7 +1044,7 @@ object LeaderSkill {
           conditions,
           payoffs
         ) and (
-          if (time != 0) LSPassive(TimeExtend(time)) else LSEffectNone
+          if (time != 0) LSPassive(TimeExtend(time)) else LSEffectNone()
         )
       }
 
@@ -1053,7 +1053,7 @@ object LeaderSkill {
           args(0)
         ) ++ conditionTypesFromBits(args(1))
         val payoffs = getStatPayoffs(hp = args(2), atk = args(3), rcv = args(4))
-        LSPassive(Board7x6) and combineConditionsAndPayoffs(
+        LSPassive(Board7x6()) and combineConditionsAndPayoffs(
           conditions,
           payoffs
         )
@@ -1095,7 +1095,7 @@ object LeaderSkill {
           payoffs
         )
       }
-      case 197 => LSPassive(VoidPoisonDamage)
+      case 197 => LSPassive(VoidPoisonDamage())
       case 198 => {
         val conditions = List(Healed(args(0)))
         val payoffs = getStatPayoffs(atk = args(1), shield = args(2))
@@ -1134,14 +1134,14 @@ object LeaderSkill {
           BonusAttackFixed(args(5))
         )
       }
-      case 202 => LSEffectNone
+      case 202 => LSEffectNone()
       case 203 => {
         getStatPayoffs(hp = args(1), atk = args(2), rcv = args(3))
           .map(payoff =>
             LSComponent(
               args(0) match {
-                case 0 => ConditionAllPixel
-                case 2 => ConditionAllRevo
+                case 0 => ConditionAllPixel()
+                case 2 => ConditionAllRevo()
               },
               payoff
             )
@@ -1230,9 +1230,9 @@ object LeaderSkill {
           atkScaling = args(3) / 100.0,
           rcvScaling = args(4) / 100.0
         )
-      case 230 => LSEffectNone
-      case 233 => LSEffectNone
-      case 234 => LSEffectNone
+      case 230 => LSEffectNone()
+      case 233 => LSEffectNone()
+      case 234 => LSEffectNone()
       case 235 => {
         val atts = Attribute.fromBitFlag(args(0))
         val amt = args(2)
@@ -1295,7 +1295,10 @@ object LeaderSkill {
     )
     val invalidValues = List(List(0, 100), List(0, 100), List(0, 100), List(0))
     val inputs = List(hp, atk, rcv, shield)
-    (inputs, invalidValues, payoffLambdas).zipped.toList
+    inputs
+      .lazyZip(invalidValues)
+      .lazyZip(payoffLambdas)
+      .toList
       .filter(t => !t._2.contains(t._1))
       .map(t => t._3(t._1))
   }
@@ -1317,9 +1320,9 @@ object LeaderSkill {
               ): LSEffect
             )
             .reduceOption(_ and _)
-            .getOrElse(LSEffectNone)
+            .getOrElse(LSEffectNone())
         )
-        .filter(_ != LSEffectNone)
+        .filter(_ != LSEffectNone())
     )
   }
   // implicit class ListUtils[A](l1: List[A]) {

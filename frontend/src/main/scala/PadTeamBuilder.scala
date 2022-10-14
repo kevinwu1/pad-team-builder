@@ -12,7 +12,7 @@ import play.api.libs.json._
 // the name 'Laminar101' matches the 'main' method setting in the
 // build.sbt file (along with the package name 'alvin').
 object PadTeamBuilder {
-  val cards: Var[Array[JsonCardData]] = Var(Array())
+  val cards: Var[Vector[JsonCardData]] = Var(Vector())
 
   val awks: Var[List[Awakening]] = Var(List())
 
@@ -51,7 +51,7 @@ object PadTeamBuilder {
           .map(card => {
             JsonParsing.jsonCardDataFromJson(card.as[JsArray].value.toList)
           })
-        val cardsArr = cards.toArray
+        val cardsArr = cards.toVector
         println(cardsArr)
         cardsArr
       })

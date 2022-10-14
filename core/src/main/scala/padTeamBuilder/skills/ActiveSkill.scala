@@ -344,7 +344,7 @@ object ActiveSkill {
         )
       case 179 => HealPerTurn(args(2), args(0))
       case 180 => EnhancedSkyfall(args(1), args(0))
-      case 184 => NoSkyfall(args(0))
+      case 184 => NoSkyfallSkill(args(0))
       case 188 =>
         ImmediateDamage(
           DFixed(args(0)),

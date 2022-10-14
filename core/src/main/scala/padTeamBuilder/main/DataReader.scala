@@ -13,7 +13,7 @@ import scala.util.Random
 import java.io.PrintStream
 
 object DataReader {
-  def main(arg: Array[String]): Unit = {
+  def main(arg: Vector[String]): Unit = {
 
     val cardDataFile = "download_card_data.json"
     val skillDataFile = "download_skill_data.json"
@@ -26,22 +26,22 @@ object DataReader {
     writeAllCards(cards, "parsed_cards.json")
   }
 
-  def writeAllCards(cards: Array[Card], path: String) = {
+  def writeAllCards(cards: Vector[Card], path: String) = {
     new PrintStream(path).print(JsonParsing.cardsToJson(cards))
   }
 
   def parseAllCardsFromJsonCardData(
-      cardData: Array[JsonCardData],
-      skillData: Array[JsonSkillData]
-  ): Array[Card] = {
+      cardData: Vector[JsonCardData],
+      skillData: Vector[JsonSkillData]
+  ): Vector[Card] = {
     cardData.map(jcd => {
       Card.cardFromJsonCardData(jcd, skillData, cardData)
     })
   }
 
   def testLSParsing3(
-      cardData: Array[JsonCardData],
-      skillData: Array[JsonSkillData]
+      cardData: Vector[JsonCardData],
+      skillData: Vector[JsonSkillData]
   ) = {
     (100 to 150).foreach(ind => {
       val theCard = cardData(Random(ind).between(0, cardData.size))
@@ -66,8 +66,8 @@ object DataReader {
   }
 
   def testLSParsing2(
-      cardData: Array[JsonCardData],
-      skillData: Array[JsonSkillData]
+      cardData: Vector[JsonCardData],
+      skillData: Vector[JsonSkillData]
   ) = {
     val target = 221
     (0 to 9000).foreach(i => {
@@ -89,7 +89,7 @@ object DataReader {
           .map(skillData)
           .filter(_.internalEffectId == target)
           .foreach(s =>
-            println(s.id + " ::: " + s.internalEffectId + ":::" + s.args)
+            println("${s.id} ::: ${s.internalEffectId} ::: ${s.args}")
           )
         println("Desc: ")
         println(skillData(theCard.leaderSkillId).desc)
@@ -106,8 +106,8 @@ object DataReader {
   }
 
   def testLSParsing(
-      cardData: Array[JsonCardData],
-      skillData: Array[JsonSkillData]
+      cardData: Vector[JsonCardData],
+      skillData: Vector[JsonSkillData]
   ) = {
     (8662 to 10000).foreach(i => {
       val theCard = cardData(i)
@@ -129,8 +129,8 @@ object DataReader {
   }
 
   def testCardParsing(
-      cardData: Array[JsonCardData],
-      skillData: Array[JsonSkillData]
+      cardData: Vector[JsonCardData],
+      skillData: Vector[JsonSkillData]
   ) = {
     (1 to 1000).foreach(i => {
       val jcd = cardData(i)
@@ -143,7 +143,7 @@ object DataReader {
     })
   }
 
-  def readCardData(path: String): Array[JsonCardData] = {
+  def readCardData(path: String): Vector[JsonCardData] = {
     val cardDataStr = Source.fromFile("../" + path).mkString
     val json: JsValue = Json.parse(cardDataStr)
     val cards = (json \ "card")
@@ -152,10 +152,10 @@ object DataReader {
       .map(card => {
         JsonParsing.jsonCardDataFromJson(card.as[JsArray].value.toList)
       })
-    cards.toArray
+    cards.toVector
   }
 
-  def readSkillData(path: String): Array[JsonSkillData] = {
+  def readSkillData(path: String): Vector[JsonSkillData] = {
     val cardDataStr = Source.fromFile("../" + path).mkString
     val json: JsValue = Json.parse(cardDataStr)
     val skills = (json \ "skill")
@@ -165,12 +165,12 @@ object DataReader {
       .map((card, ind) => {
         JsonParsing.jsonSkillDataFromJson(card.as[JsArray].value.toList, ind)
       })
-    skills.toArray
+    skills.toVector
   }
 
   def findSkill(
-      cardData: Array[JsonCardData],
-      skillData: Array[JsonSkillData]
+      cardData: Vector[JsonCardData],
+      skillData: Vector[JsonSkillData]
   ) = {
     (0 to 235).map(i => {
       val card =
@@ -193,8 +193,8 @@ object DataReader {
   }
 
   def testSkillParsing(
-      cardData: Array[JsonCardData],
-      skillData: Array[JsonSkillData]
+      cardData: Vector[JsonCardData],
+      skillData: Vector[JsonSkillData]
   ) = {
     (3854 to 3854).foreach(i => {
       val theCard = cardData(i)

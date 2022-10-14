@@ -201,9 +201,9 @@ case class Poison(
 
 case class Refresh() extends SkillEffect(s"Replaces all orbs. ")
 
-sealed trait RCVBoost
+sealed trait RCVBoostSkill
 case class RCVBoostMult(multiplier: Double, turns: Int)
-    extends RCVBoost
+    extends RCVBoostSkill
     with SkillEffect(
       s"${multiplier}x RCV for $turns turns. "
     )
@@ -211,7 +211,7 @@ case class RCVBoostByAwakening(
     rcvScaling: Double,
     awks: List[Awakening],
     turns: Int
-) extends RCVBoost
+) extends RCVBoostSkill
     with SkillEffect(
       s"1+(${rcvScaling}x) RCV for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     )
@@ -221,7 +221,7 @@ case class RCVBoostByAttributeAndType(
     atts: List[Attribute],
     types: List[CardType],
     turns: Int
-) extends RCVBoost
+) extends RCVBoostSkill
     with SkillEffect(
       s"1+(${rcvScaling}x) RCV for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
     )
@@ -333,16 +333,16 @@ case class Random(effects: List[ActiveSkill])
       s"Randomly activates one of the following: \n$skills"
     })
 
-trait TimeExtend
+trait TimeExtendSkill
 
 case class TimeExtendFlat(seconds: Int, turns: Int)
-    extends TimeExtend
+    extends TimeExtendSkill
     with SkillEffect(
       s"${if (seconds > 0) "Extends" else "Reduces"} move time by $seconds seconds for $turns turns. "
     )
 
 case class TimeExtendMult(mult: Double, turns: Int)
-    extends TimeExtend
+    extends TimeExtendSkill
     with SkillEffect(
       s"${mult}x move time for $turns turns. "
     )
@@ -443,7 +443,7 @@ case class UnmatchableClear(turns: Int)
       s"Unmatchable reduced status by $turns turns. "
     )
 
-case class NoSkyfall(turns: Int)
+case class NoSkyfallSkill(turns: Int)
     extends SkillEffect(
       s"No skyfall combos for $turns turns. "
     )

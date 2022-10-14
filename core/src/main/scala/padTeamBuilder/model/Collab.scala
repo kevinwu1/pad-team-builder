@@ -1,6 +1,6 @@
 package padTeamBuilder.model
 
-enum Collab(str: String) {
+enum Collab(str: String) extends Enum[Collab] {
   case None extends Collab("None")
   case Ragnarok extends Collab("Ragnarok")
   case Taiko extends Collab("Taiko")

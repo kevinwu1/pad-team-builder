@@ -9,6 +9,7 @@ lazy val core = project
   .enablePlugins(ScalaJSPlugin) // this is needed apparently
   .settings(buildSettings)
   .settings(
+    scalacOptions := Seq("Ymacro-debug-lite", "-deprecation"),
     name := "pad team builder",
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
     libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC7"
