@@ -14,6 +14,7 @@ import java.io.PrintStream
 
 object DataReader {
   def main(arg: Array[String]): Unit = {
+    println(s"Current dir: ${System.getProperty("user.dir")}")
     val cardDataFile = "download_card_data.json"
     val skillDataFile = "download_skill_data.json"
     val cardData = readCardData(cardDataFile)
@@ -22,11 +23,20 @@ object DataReader {
     println("carddata length: " + cardData.size)
     testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
-    writeAllCards(cards, "parsed_cards.json")
+
+    val path = "parsed_cards.json"
+    writeAllCards(cards, path)
+    val cards2 = readAllCards(path)
+
   }
 
   def writeAllCards(cards: Vector[Card], path: String) = {
     new PrintStream(path).print(JsonParsing.cardsToJson(cards))
+  }
+
+  def readAllCards(path: String): Vector[Card] = {
+    val json = Source.fromFile(path).mkString
+    JsonParsing.cardsFromJson(json)
   }
 
   def parseAllCardsFromJsonCardData(
@@ -144,6 +154,7 @@ object DataReader {
 
   def readCardData(path: String): Vector[JsonCardData] = {
     val cardDataStr = Source.fromFile("../" + path).mkString
+    println("Got: " + cardDataStr.substring(0, 100))
     val json: JsValue = Json.parse(cardDataStr)
     val cards = (json \ "card")
       .as[JsArray]

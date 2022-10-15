@@ -12,48 +12,17 @@ import play.api.libs.json._
 // the name 'Laminar101' matches the 'main' method setting in the
 // build.sbt file (along with the package name 'alvin').
 object PadTeamBuilder {
-  val cards: Var[Vector[JsonCardData]] = Var(Vector())
+  val cards: Var[Vector[Card]] = Var(Vector())
 
   val awks: Var[List[Awakening]] = Var(List())
 
   // the 'main' method
   def main(args: Array[String]): Unit = {
-    // val colorVar
-    // create a <div> that contains an <h1> tag. these methods come from
-    // the 'com.raquo.laminar.api.L._' import.
-    // val xhr = new XMLHttpRequest()
-    // xhr.open(
-    //   "GET",
-    //   "download_card_data.json"
-    // )
-    // xhr.onload = { (e: Event) =>
-    //   if (xhr.status == 200) {
-    //     val json = Json.parse(xhr.responseText)
-    //     val cards = (json \ "card")
-    //       .as[JsArray]
-    //       .value
-    //       .map(card => {
-    //         JsonParsing.cardFromJson(card.as[JsArray].value.toList)
-    //       })
-    //     val cardsArr = cards.toArray
-    //     println(cardsArr)
-    //   }
-    // }
-    // xhr.send()
 
     val jsoncards = AjaxEventStream
-      .get("download_card_data.json")
+      .get("parsed_cards.json")
       .map(req => {
-        val json = Json.parse(req.responseText)
-        val cards = (json \ "card")
-          .as[JsArray]
-          .value
-          .map(card => {
-            JsonParsing.jsonCardDataFromJson(card.as[JsArray].value.toList)
-          })
-        val cardsArr = cards.toVector
-        println(cardsArr)
-        cardsArr
+        JsonParsing.cardsFromJson(req.responseText)
       })
 
     jsoncards --> cards

@@ -315,39 +315,7 @@ object JsonParsing {
   implicit val formatAddAwakening: Format[AddAwakening] =
     Json.format[AddAwakening]
 
-  implicit val cardWrites: Writes[Card] = (
-    (JsPath \ "id").write[Long] and
-      (JsPath \ "name").write[String] and
-      (JsPath \ "att").write[Attribute] and
-      (JsPath \ "subatt").write[Attribute] and
-      (JsPath \ "types").write[List[CardType]] and
-      (JsPath \ "activeSkill").write[ActiveSkill] and
-      (JsPath \ "leaderSkill").write[LeaderSkill] and
-      (JsPath \ "awakenings").write[List[Awakening]] and
-      (JsPath \ "superAwakenings").write[List[Awakening]] and
-      (JsPath \ "isInheritable").write[Boolean] and
-      (JsPath \ "isExtraSlottable").write[Boolean] and
-      (JsPath \ "cardStats").write[CardStats] and
-      (JsPath \ "cardEnemySkills").write[CardEnemySkills] and
-      (JsPath \ "cardMiscStats").write[CardMiscStats]
-  )((card: Card) =>
-    (
-      card.id,
-      card.name,
-      card.att,
-      card.subatt,
-      card.types,
-      card.activeSkill,
-      card.leaderSkill,
-      card.awakenings,
-      card.superAwakenings,
-      card.isInheritable,
-      card.isExtraSlottable,
-      card.cardStats,
-      card.cardEnemySkills,
-      card.cardMiscStats
-    )
-  )
+  implicit val cardFormat: Format[Card] = Json.format[Card]
 
   def jsonCardDataFromJson(data: List[JsValue]): JsonCardData = {
     val it = data.iterator
@@ -574,20 +542,24 @@ object JsonParsing {
     )
   }
 
-  def cardToJson(card: Card): String = {
-
-    ???
-  }
-
-  def cardFromJson(json: String): Card = {
-    ???
-  }
-
   def cardsToJson(cards: Seq[Card]): String = {
     Json.toJson(cards).toString
   }
 
   def cardsFromJson(json: String): Vector[Card] = {
-    ???
+    Json
+      .parse(json)
+      .as[JsArray]
+      .value
+      .map(card => {
+        card.validate[Card] match {
+          case s: JsSuccess[Card] => s.get
+          case e: JsError => {
+            System.err.println(e.errors)
+            ???
+          }
+        }
+      })
+      .toVector
   }
 }

@@ -36,3 +36,7 @@ download_skill_data.json
 download_card_data.json
 download_enemy_skill_data.json
 node_modules
+
+parsed_cards.json
+
+target-core/
