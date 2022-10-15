@@ -20,7 +20,24 @@ final case class Card(
     cardStats: CardStats,
     cardEnemySkills: CardEnemySkills,
     cardMiscStats: CardMiscStats
-) {}
+) {
+  def containsAwakenings(
+      awks: Seq[Awakening],
+      includeSupers: Boolean
+  ): (Boolean, List[Awakening]) = {
+    val diff = awks.diff(awakenings)
+    if (!includeSupers) (diff.size == 0, List())
+    else {
+      if (diff.size == 0) {
+        (true, superAwakenings)
+      } else if (diff.size == 1 && superAwakenings.contains(diff.head)) {
+        (true, diff.toList)
+      } else {
+        (false, superAwakenings)
+      }
+    }
+  }
+}
 
 case class CardStats(
     starCount: Long,

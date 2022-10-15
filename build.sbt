@@ -9,9 +9,6 @@ lazy val core = project
   .in(file("core"))
   .settings(buildSettings)
   .settings(
-    target := {
-      (ThisBuild / baseDirectory).value / "core" / "target-core"
-    },
     scalacOptions ++= Seq(
       "Ymacro-debug-lite",
       "-deprecation"
@@ -29,6 +26,9 @@ lazy val corejs = project
   .enablePlugins(ScalaJSPlugin) // this is needed to create sjsir files
   .settings(buildSettings)
   .settings(
+    target := {
+      (ThisBuild / baseDirectory).value / "core" / "target-json"
+    },
     // do not use := here or sbt cannot produce js output
     scalacOptions ++= Seq(
       "Ymacro-debug-lite",

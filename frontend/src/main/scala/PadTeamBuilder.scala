@@ -4,29 +4,77 @@ import com.raquo.laminar.api.L._
 import org.scalajs.dom
 import org.scalajs.dom._
 import padTeamBuilder.model._
+import padTeamBuilder.skills._
+import padTeamBuilder.skills.effects.active._
+import padTeamBuilder.skills.effects.leader._
 import padTeamBuilder.json._
 import com.raquo.airstream.web._
 
 import play.api.libs.json._
+import com.raquo.airstream.core.Observer
 
 // the name 'Laminar101' matches the 'main' method setting in the
 // build.sbt file (along with the package name 'alvin').
 object PadTeamBuilder {
-  val cards: Var[Vector[Card]] = Var(Vector())
 
+  val cards: Var[Vector[Card]] = Var(Vector())
+  val cardsUpstream = AjaxEventStream
+    .get(
+      url = "parsed_cards.json",
+      progressObserver =
+        Observer[(XMLHttpRequest, ProgressEvent)] { (evs, ev) =>
+          println(
+            s"Progress: ${ev.loaded} / ${ev.total} (lengthComputable = ${ev.lengthComputable})"
+          )
+        },
+      readyStateChangeObserver = Observer[XMLHttpRequest] { x =>
+        println(s"readyState ${x.readyState}")
+      }
+    )
+    .map(req => {
+      println("Parsing start")
+      val p = JsonParsing.cardsFromJson(req.responseText)
+      println("Parsing end")
+      p.filter(_.name != "*****")
+        .filter(_.name != "????")
+    })
+  cardsUpstream
+    .addObserver(cards.writer)(unsafeWindowOwner)
   val awks: Var[List[Awakening]] = Var(List())
+
+  val filteredCards: Signal[Vector[(Card, List[Awakening])]] = awks.signal
+    .combineWith(cards.signal)
+    .mapN((awaks, cards) => {
+      println("Starting filter")
+      val r = cards
+        .map(card => {
+          val (has, supers) = card.containsAwakenings(awaks, true)
+          (card, has, supers)
+        })
+        .filter(_._2)
+        .map(t => (t._1, t._3))
+      println("done filter: " + r.size)
+      r.slice(0, 200)
+    })
 
   // the 'main' method
   def main(args: Array[String]): Unit = {
 
-    val jsoncards = AjaxEventStream
-      .get("parsed_cards.json")
-      .map(req => {
-        JsonParsing.cardsFromJson(req.responseText)
-      })
-
-    jsoncards --> cards
     val rootElement: HtmlElement = div(
+      div(
+        Awakening.values
+          .map(renderAwk)
+          .map(t => {
+            val ord = t._2
+            val awk = t._1
+            awk.amend(
+              onClick.map((_) => {
+                println(cards.now().size)
+                awks.now() :+ ord
+              }) --> awks
+            )
+          }): _*
+      ),
       div(
         h1("Selected: "),
         div(
@@ -45,17 +93,27 @@ object PadTeamBuilder {
         )
       ),
       div(
-        Awakening.values
-          .map(renderAwk)
-          .map(t => {
-            val ord = t._2
-            val awk = t._1
-            awk.amend(
-              onClick.map((_) => {
-                awks.now() :+ ord
-              }) --> awks
-            )
-          }): _*
+        div("hii4"),
+        div(
+          children <-- filteredCards.split(t => (t._1.id, t._2))(
+            (key, t, sig) => {
+              val card = t._1
+              val supers = t._2
+              div(
+                span(s"#${card.id} - ${card.name}"),
+                br(),
+                card.awakenings.map(renderAwk).map(_._1),
+                br(),
+                card.superAwakenings.map(awk => {
+                  if (!supers.contains(awk))
+                    renderAwk(awk)._1.amend(className := "gray")
+                  else
+                    renderAwk(awk)._1
+                })
+              )
+            }
+          )
+        )
       )
     )
 

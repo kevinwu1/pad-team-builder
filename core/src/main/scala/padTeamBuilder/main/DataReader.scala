@@ -24,8 +24,11 @@ object DataReader {
     testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
 
+    val (normalCards, altCards) = cards.partition(_.id < 20000)
     val path = "parsed_cards.json"
-    writeAllCards(cards, path)
+    val desiredCards =
+      normalCards.reverse.filter(_.name != "*****").filter(_.name != "????")
+    writeAllCards(desiredCards, path)
     val cards2 = readAllCards(path)
 
   }
