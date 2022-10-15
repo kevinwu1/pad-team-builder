@@ -25,11 +25,25 @@ object DataReader {
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
 
     val (normalCards, altCards) = cards.partition(_.id < 20000)
-    val path = "parsed_cards.json"
+    val basepath = "parsed_cards.json"
     val desiredCards =
       normalCards.reverse.filter(_.name != "*****").filter(_.name != "????")
-    writeAllCards(desiredCards, path)
-    val cards2 = readAllCards(path)
+    val splits = 9
+    val step = 1000
+    (0 to 20).reverse
+      .map(i =>
+        (
+          i,
+          desiredCards.filter(c => i * step <= c.id && c.id < (i + 1) * step)
+        )
+      )
+      .filter(_._2.nonEmpty)
+      .foreach(t => {
+        val ind = t._1
+        val cards = t._2
+        val path = s"parsed_cards_${ind}.json"
+        writeAllCards(cards, path)
+      })
 
   }
 
@@ -157,7 +171,6 @@ object DataReader {
 
   def readCardData(path: String): Vector[JsonCardData] = {
     val cardDataStr = Source.fromFile("../" + path).mkString
-    println("Got: " + cardDataStr.substring(0, 100))
     val json: JsValue = Json.parse(cardDataStr)
     val cards = (json \ "card")
       .as[JsArray]

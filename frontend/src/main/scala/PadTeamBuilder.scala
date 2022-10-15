@@ -17,35 +17,52 @@ import com.raquo.airstream.core.Observer
 // build.sbt file (along with the package name 'alvin').
 object PadTeamBuilder {
 
-  val cards: Var[Vector[Card]] = Var(Vector())
-  val cardsUpstream = AjaxEventStream
-    .get(
-      url = "parsed_cards.json",
-      progressObserver =
-        Observer[(XMLHttpRequest, ProgressEvent)] { (evs, ev) =>
-          println(
-            s"Progress: ${ev.loaded} / ${ev.total} (lengthComputable = ${ev.lengthComputable})"
-          )
-        },
-      readyStateChangeObserver = Observer[XMLHttpRequest] { x =>
-        println(s"readyState ${x.readyState}")
-      }
-    )
-    .map(req => {
-      println("Parsing start")
-      val p = JsonParsing.cardsFromJson(req.responseText)
-      println("Parsing end")
-      p.filter(_.name != "*****")
-        .filter(_.name != "????")
-    })
-  cardsUpstream
-    .addObserver(cards.writer)(unsafeWindowOwner)
+  val cards: Var[Vector[Card]] = Var(Vector[Card]())
+
+  def getCards(url: String, cards: Var[Vector[Card]], cb: () => Unit) = {
+    println(s"getCards called on $url")
+    val s = AjaxEventStream
+      .get(
+        url = url,
+        progressObserver =
+          Observer[(XMLHttpRequest, ProgressEvent)] { (evs, ev) =>
+            val perc = ev.loaded * 100.0 / ev.total
+            println(
+              s"Progress: ${perc}% of ${ev.total}"
+            )
+          },
+        readyStateChangeObserver = Observer[XMLHttpRequest] { x =>
+          println(s"ready state: ${x.readyState}")
+          if (x.readyState == 4) {
+            cb()
+          }
+        }
+      )
+      .map(req => {
+        println(s"Parsing start $url")
+        val p = JsonParsing.cardsFromJson(req.responseText)
+        println(s"Parsing end $url ::: ${p.head.id}")
+        p
+      })
+    s.addObserver(Observer[Vector[Card]] { c =>
+      println("THE SIZE IS " + c.size + ", " + c.head.id)
+    })(unsafeWindowOwner)
+    s.addObserver(Observer[Vector[Card]] { newCards =>
+      cards.update(v => v ++ newCards)
+    })(unsafeWindowOwner)
+  }
+  (0 to 9).foldLeft(() => ())((cb, i) =>
+    () => getCards(s"parsed_cards_${i}.json", cards, cb)
+  )()
+  cards.signal.addObserver(Observer[Vector[Card]] { c =>
+    println("THE SIZE IS " + c.size)
+  })(unsafeWindowOwner)
   val awks: Var[List[Awakening]] = Var(List())
 
   val filteredCards: Signal[Vector[(Card, List[Awakening])]] = awks.signal
     .combineWith(cards.signal)
     .mapN((awaks, cards) => {
-      println("Starting filter")
+      println("Starting filter " + cards.size)
       val r = cards
         .map(card => {
           val (has, supers) = card.containsAwakenings(awaks, true)
@@ -93,7 +110,7 @@ object PadTeamBuilder {
         )
       ),
       div(
-        div("hii4"),
+        div("hii34"),
         div(
           children <-- filteredCards.split(t => (t._1.id, t._2))(
             (key, t, sig) => {
