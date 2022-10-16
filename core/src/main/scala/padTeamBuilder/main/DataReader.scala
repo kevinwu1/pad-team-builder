@@ -23,7 +23,9 @@ object DataReader {
     println("carddata length: " + cardData.size)
     testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
+  }
 
+  def createParsedCards(cards: Vector[Card]) = {
     val (normalCards, altCards) = cards.partition(_.id < 20000)
     val basepath = "parsed_cards.json"
     val desiredCards =
@@ -44,9 +46,7 @@ object DataReader {
         val path = s"parsed_cards_${ind}.json"
         writeAllCards(cards, path)
       })
-
   }
-
   def writeAllCards(cards: Vector[Card], path: String) = {
     new PrintStream(path).print(JsonParsing.cardsToJson(cards))
   }

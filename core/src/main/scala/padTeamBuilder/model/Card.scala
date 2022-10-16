@@ -37,6 +37,7 @@ final case class Card(
       }
     }
   }
+
 }
 
 case class CardStats(
@@ -51,7 +52,14 @@ case class CardStats(
     maxRcv: Long,
     limitBreakStatGain: Long,
     isLimitBreakable: Boolean
-)
+) {
+  lazy val finalHp: Long =
+    (maxHp * (100 + limitBreakStatGain + 10) / 100.0 + 99 * 10).round
+  lazy val finalAtk: Long =
+    (maxAtk * (100 + limitBreakStatGain + 5) / 100.0 + 99 * 5).round
+  lazy val finalRcv: Long =
+    (maxRcv * (100 + limitBreakStatGain + 5) / 100.0 + 99 * 3).round
+}
 
 case class CardEnemySkills(
     turnTimer: Long,
@@ -101,6 +109,7 @@ case class CardMiscStats(
 )
 
 object Card {
+
   def cardFromJsonCardData(
       jcd: JsonCardData,
       skillData: Seq[JsonSkillData],
