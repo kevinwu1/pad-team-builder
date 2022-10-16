@@ -13,6 +13,9 @@ object AwakeningSelector {
     div(
       div(
         Awakening.values
+          .filter(!_.name.startsWith("Unknown"))
+          .filter(_ != Awakening.None)
+          .filter(_ != Awakening.Super)
           .map(awk => {
             val ele = Util.renderAwk(awk)
             ele.amend(

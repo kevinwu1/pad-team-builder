@@ -54,11 +54,14 @@ case class CardStats(
     isLimitBreakable: Boolean
 ) {
   lazy val finalHp: Long =
-    (maxHp * (100 + limitBreakStatGain + 10) / 100.0 + 99 * 10).round
+    (maxHp * (if (isLimitBreakable) (100 + limitBreakStatGain + 10) / 100.0
+              else 1.0) + 99 * 10).round
   lazy val finalAtk: Long =
-    (maxAtk * (100 + limitBreakStatGain + 5) / 100.0 + 99 * 5).round
+    (maxAtk * (if (isLimitBreakable) (100 + limitBreakStatGain + 5) / 100.0
+               else 1.0) + 99 * 5).round
   lazy val finalRcv: Long =
-    (maxRcv * (100 + limitBreakStatGain + 5) / 100.0 + 99 * 3).round
+    (maxRcv * (if (isLimitBreakable) (100 + limitBreakStatGain + 5) / 100.0
+               else 1.0) + 99 * 3).round
 }
 
 case class CardEnemySkills(

@@ -118,6 +118,7 @@ enum Awakening(str: String) extends Enum[Awakening] {
   case Unknown114 extends Awakening("Unknown114")
   case Super extends Awakening("Super")
   def atkMult = Awakening.getAtkMult(this)
+  def rcvMult = Awakening.getRcvMult(this)
 }
 
 object Awakening {
@@ -148,6 +149,16 @@ object Awakening {
       case Brick       => 12
       case TPAPlus     => getAtkMult(Awakening.TPA) * getAtkMult(Awakening.TPA)
       case _           => 1
+    }
+  }
+
+  def getRcvMult(awk: Awakening): Double = {
+    awk match {
+      case Multiboost   => 1.5
+      case HeartEnhance => 1.5
+      case HeartEnhancePlus =>
+        getRcvMult(HeartEnhance) * getRcvMult(HeartEnhance)
+      case _ => 1.0
     }
   }
 }

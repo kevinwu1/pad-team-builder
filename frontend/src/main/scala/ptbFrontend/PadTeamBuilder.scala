@@ -34,7 +34,7 @@ object PadTeamBuilder {
           })
           .filter(_._2)
           .map(t => (t._1, t._3))
-        r.slice(0, 200)
+        r
       })
 
   def main(args: Array[String]): Unit = {

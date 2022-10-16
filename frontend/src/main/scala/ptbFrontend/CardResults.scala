@@ -14,15 +14,6 @@ object CardResults {
   val ID_CUTOFF = 20000
   val idRanker: CardSearchResult => Long = _._1.id
 
-  val atkRanker: CardSearchResult => Long = csr =>
-    getAtkMult(csr._1, csr._2, Awakening.values)
-
-  val resultsRanker: Var[CardRanker] = Var(
-    atkRanker
-  )
-
-  val isDesc: Var[Boolean] = Var(true)
-
   def getAtkMult(
       card: Card,
       supers: List[Awakening],
@@ -36,11 +27,35 @@ object CardResults {
       .map(_.atkMult)
       .fold(1.0)(Math.max) * card.cardStats.finalAtk).round
   }
+  val atkRanker: CardSearchResult => Long = csr =>
+    getAtkMult(csr._1, csr._2, Awakening.values)
+
+  def getRcvMult(
+      card: Card,
+      supers: List[Awakening],
+      awakeningsToConsider: Seq[Awakening]
+  ): Long = {
+    (card.awakenings
+      .filter(awakeningsToConsider.contains)
+      .map(_.rcvMult)
+      .fold(1.0)(_ * _) * supers
+      .filter(awakeningsToConsider.contains)
+      .map(_.rcvMult)
+      .fold(1.0)(Math.max) * card.cardStats.finalRcv).round
+  }
+
+  val rcvRanker: CardSearchResult => Long = csr =>
+    getRcvMult(csr._1, csr._2, Awakening.values)
+
+  val resultsRanker: Var[CardRanker] = Var(atkRanker)
+
+  val isDesc: Var[Boolean] = Var(true)
 
   def renderCardResults(
       results: Signal[Vector[CardSearchResult]]
-  ) = {
+  ): HtmlElement = {
     div(
+      renderSortOptions(resultsRanker, isDesc),
       div(
         children <-- results
           .combineWith(resultsRanker)
@@ -51,8 +66,9 @@ object CardResults {
               o.reverse
             else o
           })
+          .map(_.slice(0, 200))
           .map(v => v.map((csr, rank) => (csr._1, csr._2, rank)))
-          .split(t => (t._1.id, t._2))((key, t, sig) => {
+          .split(t => (t._1.id, t._2, t._3))((key, t, sig) => {
             val card = t._1
             val supers = t._2
             val rank = t._3
@@ -69,6 +85,38 @@ object CardResults {
               })
             )
           })
+      )
+    )
+  }
+
+  val labelToRanker: Map[String, CardSearchResult => Long] = Map(
+    "ATK" -> atkRanker,
+    "RCV" -> rcvRanker,
+    "id" -> idRanker
+  )
+  def renderSortOptions(
+      resultsRanker: Var[CardRanker],
+      isDesc: Var[Boolean]
+  ): HtmlElement = {
+    p(
+      "Sort: ",
+      select(
+        value := "ATK",
+        onChange.mapToValue.map(labelToRanker) --> resultsRanker,
+        labelToRanker
+          .map(t => option(value := t._1, t._1))
+          .toList // toList is necessary becauses iterable is not accepted
+      ),
+      input(
+        typ := "checkbox",
+        name := "reversed",
+        idAttr := "reversed",
+        checked <-- isDesc.signal.map(!_),
+        onInput.mapToChecked.map(!_) --> isDesc
+      ),
+      label(
+        forId := "reversed",
+        "Reversed"
       )
     )
   }
