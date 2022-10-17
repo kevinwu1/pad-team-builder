@@ -13,8 +13,6 @@ import CardResults.CardSearchResult
 import play.api.libs.json._
 import com.raquo.airstream.core.Observer
 
-// the name 'Laminar101' matches the 'main' method setting in the
-// build.sbt file (along with the package name 'alvin').
 object PadTeamBuilder {
 
   val cards: Var[Vector[Card]] = Var(Vector[Card]())
