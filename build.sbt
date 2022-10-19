@@ -16,8 +16,10 @@ lazy val core = project
     run / baseDirectory := (ThisBuild / baseDirectory).value / "core",
     run / fork := true,
     name := "pad team builder",
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
-    libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.0-RC7"
+    libraryDependencies ++= Seq(
+      "org.scalameta" %% "munit" % "0.7.29" % Test,
+      "com.typesafe.play" %% "play-json" % "2.10.0-RC7"
+    )
   )
 
 lazy val corejs = project
@@ -35,9 +37,12 @@ lazy val corejs = project
       "-deprecation"
     ),
     name := "pad team builder",
-    libraryDependencies += "org.scalameta" %%% "munit" % "0.7.29" % Test,
-    libraryDependencies += "com.typesafe.play" %%% "play-json" % "2.10.0-RC7",
-    scalaJSUseMainModuleInitializer := true
+    scalaJSUseMainModuleInitializer := true,
+    libraryDependencies ++= Seq(
+      // scala-js dependency needs triple percent
+      "org.scalameta" %%% "munit" % "0.7.29" % Test,
+      "com.typesafe.play" %%% "play-json" % "2.10.0-RC7"
+    )
   )
 
 lazy val frontend = project

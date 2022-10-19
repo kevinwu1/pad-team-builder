@@ -1,19 +1,44 @@
 package padTeamBuilder.main
 
-import scala.io.Source
-import padTeamBuilder.model._
 import padTeamBuilder.json._
-import padTeamBuilder.skills.LeaderSkill
+import padTeamBuilder.model._
 import padTeamBuilder.skills.ActiveSkill
+import padTeamBuilder.skills.LeaderSkill
 import padTeamBuilder.skills.effects._
+import padTeamBuilder.skills.effects.active._
 import padTeamBuilder.skills.effects.leader.LSEffectNone
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import scala.util.Random
+import play.api.libs.json._
+
 import java.io.PrintStream
+import scala.compiletime._
+import scala.deriving.*
+import scala.io.Source
+import scala.util.Random
 
 object DataReader {
   def main(arg: Array[String]): Unit = {
+    println(getSomeVals[DefenseBreak])
+    println(getSomeVals[NoEffect])
+    println(getSomeVals[EnhanceOrbs])
+    println(getSomeVals[ChangeTheWorld])
+  }
+
+  inline def getSomeVals[T <: SkillEffect](using
+      x: Mirror.ProductOf[T]
+  ): String = {
+    val s = helper[x.MirroredElemTypes]
+    s.mkString(",")
+  }
+
+  inline def helper[T <: Tuple]: List[Int] = inline erasedValue[T] match {
+    case _: EmptyTuple  => Nil
+    case _: (Int *: ts) => 0 :: helper[ts]
+    case _: (t *: ts)   => -1 :: helper[ts]
+  }
+
+  def test() = {
+
     println(s"Current dir: ${System.getProperty("user.dir")}")
     val cardDataFile = "download_card_data.json"
     val skillDataFile = "download_skill_data.json"

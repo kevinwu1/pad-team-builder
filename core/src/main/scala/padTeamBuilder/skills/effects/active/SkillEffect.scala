@@ -2,13 +2,13 @@ package padTeamBuilder.skills.effects.active
 
 import padTeamBuilder.model._
 import padTeamBuilder.skills.ActiveSkill
-
+import shapeless3.deriving.*
 // sealed trait SkillEffectJson[T]() {
 //   def toJson: JsSuccess = {}
 // }
 
 //is this a monoid?
-sealed trait SkillEffect(str: String) {
+sealed trait SkillEffect(str: String) extends Product {
   def and(other: SkillEffect): SkillEffect = {
     (this, other) match {
       case (_, NoEffect()) => this

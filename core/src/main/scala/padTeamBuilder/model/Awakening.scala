@@ -131,11 +131,11 @@ object Awakening {
 
   def getAtkMult(awk: Awakening): Double = {
     awk match {
-      case Multiboost | LShield => 1.5
-      case TPA | LUnlock | HP80 => 1.7
-      case SevenCombo           => 2
-      case HP50                 => 2.2
-      case VDP                  => 2.5
+      case Multiboost | LShield                       => 1.5
+      case TPA | LUnlock | HP80                       => 1.7
+      case SevenCombo | JammerSkyfall | PoisonSkyfall => 2
+      case HP50                                       => 2.2
+      case VDP                                        => 2.5
       case DragonKiller | GodKiller | DevilKiller | MachineKiller |
           BalancedKiller | AttackerKiller | PhysicalKiller | HealerKiller |
           EvoKiller | AwakeningKiller | EnhanceKiller | RedeemableKiller =>
