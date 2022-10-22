@@ -2,10 +2,10 @@ package padTeamBuilder.json
 
 import padTeamBuilder.model._
 import padTeamBuilder.skills._
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import padTeamBuilder.skills.effects.active._
 import padTeamBuilder.skills.effects.leader._
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 object JsonParsing {
 
@@ -42,11 +42,12 @@ object JsonParsing {
   implicit val collabReads: Reads[Collab] =
     makeEnumReads[Collab](Collab.fromOrdinal)
 
-  implicit val activeSkillFormat: Format[ActiveSkill] = Json.format[ActiveSkill]
+  implicit val formatNoEffect: Format[NoEffect] = Json.format[NoEffect]
+  implicit val formatMultiEffect: Format[MultiEffect] =
+    Json.format[MultiEffect]
+    // unreachable case showed up when i added ConditionalComponentTyped
   implicit val conditionalComponentFormat: Format[ConditionalComponent] =
     Json.format[ConditionalComponent]
-  implicit val formatNoEffect: Format[NoEffect] = Json.format[NoEffect]
-  implicit val formatMultiEffect: Format[MultiEffect] = Json.format[MultiEffect]
   implicit val formatEvolvingEffect: Format[EvolvingEffect] =
     Json.format[EvolvingEffect]
   implicit val formatConditionalEffect: Format[ConditionalEffect] =
@@ -129,8 +130,8 @@ object JsonParsing {
     Json.format[TimeExtendFlat]
   implicit val formatTimeExtendMult: Format[TimeExtendMult] =
     Json.format[TimeExtendMult]
-  implicit val formatAttributeChange: Format[AttributeChange] =
-    Json.format[AttributeChange]
+  implicit val formatAttributeChange: Format[AttributeChangeSelf] =
+    Json.format[AttributeChangeSelf]
   implicit val formatHasteFixed: Format[HasteFixed] = Json.format[HasteFixed]
   implicit val formatHasteRandom: Format[HasteRandom] = Json.format[HasteRandom]
   implicit val formatLockOrbs: Format[LockOrbs] = Json.format[LockOrbs]
@@ -210,7 +211,7 @@ object JsonParsing {
     Json.format[CardEnemySkills]
   implicit val cardMiscStatsFormat: Format[CardMiscStats] =
     Json.format[CardMiscStats]
-
+  implicit val activeSkillFormat: Format[ActiveSkill] = Json.format[ActiveSkill]
 //leader skills
   implicit val leaderSkillFormat: Format[LeaderSkill] = Json.format[LeaderSkill]
   implicit val formatLSEffect: Format[LSEffect] = Json.format[LSEffect]

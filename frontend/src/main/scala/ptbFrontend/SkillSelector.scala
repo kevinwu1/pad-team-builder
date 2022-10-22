@@ -13,10 +13,37 @@ import scala.compiletime._
 
 object SkillSelector {
 
+  sealed trait ASExpression {
+    def test(t: SkillEffect): Boolean
+  }
+
+  case class ASAnd(exps: List[ASExpression]) extends ASExpression {
+    override def test(t: SkillEffect): Boolean = exps.forall(_.test(t))
+  }
+  case class ASMinMax[T <: SkillEffect](min: T, max: T) extends ASExpression {
+    def test(t: SkillEffect): Boolean = {
+      min.getClass().toString() == t.getClass().toString() && (
+        (min <= t) && (t <= max)
+      )
+    }
+  }
+
+  inline def getSomeVals[T <: SkillEffect](using
+      x: Mirror.ProductOf[T]
+  ): String = {
+    val s = helper[x.MirroredElemTypes]
+    s.mkString(",")
+  }
+
+  inline def helper[T <: Tuple]: List[Int] = inline erasedValue[T] match {
+    case _: EmptyTuple  => Nil
+    case _: (Int *: ts) => 0 :: helper[ts]
+    case _: (t *: ts)   => -1 :: helper[ts]
+  }
+
   def renderSkillSelect(using
       x: Mirror.ProductOf[DefenseBreak]
   ): HtmlElement = {
-
     /**/
     ???
   }

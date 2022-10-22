@@ -17,11 +17,30 @@ import scala.io.Source
 import scala.util.Random
 
 object DataReader {
+  sealed trait ASExpression {
+    def test(t: SkillEffectGeneric): Boolean
+  }
+
+  case class ASAnd(exps: List[ASExpression]) extends ASExpression {
+    override def test(t: SkillEffectGeneric): Boolean = exps.forall(_.test(t))
+  }
+  case class ASMinMax[T <: SkillEffectGeneric](min: T, max: T)
+      extends ASExpression {
+    def test(t: SkillEffectGeneric): Boolean = {
+      min <= t && t <= max
+    }
+  }
+
   def main(arg: Array[String]): Unit = {
-    println(getSomeVals[DefenseBreak])
-    println(getSomeVals[NoEffect])
-    println(getSomeVals[EnhanceOrbs])
-    println(getSomeVals[ChangeTheWorld])
+    case class HasteGeneric(turns: Int) extends Haste
+    println(
+      ASMinMax[HasteGeneric](
+        HasteGeneric(1),
+        HasteGeneric(4)
+      ).test(
+        HasteFixed(2)
+      )
+    )
   }
 
   inline def getSomeVals[T <: SkillEffect](using

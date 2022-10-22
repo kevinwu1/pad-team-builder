@@ -265,11 +265,11 @@ object ActiveSkill {
       case 141 =>
         OrbChangeRandomSpawn(
           numOrbs = args(0),
-          spawnAtts = Attribute.fromBitFlag(args(1)),
+          atts = Attribute.fromBitFlag(args(1)),
           exclAtts = Attribute.fromBitFlag(args(2))
         )
       case 142 =>
-        AttributeChange(args(0), Attribute.from(args(1)))
+        AttributeChangeSelf(args(0), Attribute.from(args(1)))
       case 143 =>
         ImmediateDamage(
           DTeamHpMult(args(0) / 100),
@@ -376,11 +376,11 @@ object ActiveSkill {
       case 208 =>
         OrbChangeRandomSpawn(
           numOrbs = args(0),
-          spawnAtts = Attribute.fromBitFlag(args(1)),
+          atts = Attribute.fromBitFlag(args(1)),
           exclAtts = Attribute.fromBitFlag(args(2))
         ) and OrbChangeRandomSpawn(
           numOrbs = args(3),
-          spawnAtts = Attribute.fromBitFlag(args(4)),
+          atts = Attribute.fromBitFlag(args(4)),
           exclAtts = (Attribute.fromBitFlag(args(2)) ++
             Attribute.fromBitFlag(args(5))).distinct
         )
