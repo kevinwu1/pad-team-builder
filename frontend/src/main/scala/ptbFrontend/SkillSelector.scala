@@ -2,28 +2,46 @@ package ptbFrontend
 
 import com.raquo.airstream.web._
 import com.raquo.laminar.api.L._
-import padTeamBuilder.model._
 import org.scalajs.dom
 import org.scalajs.dom._
-import padTeamBuilder.skills.effects.active._
+import org.scalajs.dom.raw.HTMLElement
+import padTeamBuilder.model._
 import padTeamBuilder.skills._
+import padTeamBuilder.skills.effects.active._
 
-import scala.deriving.*
 import scala.compiletime._
+import scala.deriving.*
 
 object SkillSelector {
 
   sealed trait ASExpression {
     def test(t: SkillEffect): Boolean
+    def render: HtmlElement
+  }
+
+  case class ASNone() extends ASExpression {
+    override def test(t: SkillEffect) = true
+    override def render = div()
   }
 
   case class ASAnd(exps: List[ASExpression]) extends ASExpression {
     override def test(t: SkillEffect): Boolean = exps.forall(_.test(t))
+    override def render = div({
+      val r = exps.map(e => p(e.render))
+      r.tail.foldLeft(List(r.head))((l, i) => (l :+ p("and")) :+ i)
+    })
   }
   case class ASMinMax[T <: SkillEffect](min: T, max: T) extends ASExpression {
     def test(t: SkillEffect): Boolean = {
-      min.getClass().toString() == t.getClass().toString() && (
-        (min <= t) && (t <= max)
+      (min <= t) && (t <= max)
+    }
+
+    override def render = {
+      val names = min.productElementNames.toList
+      val vals = min.productIterator.zip(max.productIterator).toList
+      div(
+        div(min.getClass().getSimpleName()),
+        names.zip(vals).map((n, t) => div(s"${t._1} <= $n <= ${t._2}"))
       )
     }
   }
@@ -49,13 +67,11 @@ object SkillSelector {
   }
 
   def renderSkillSelector(
-      selectedSkill: Var[List[Awakening]]
+      asExpression: Var[ASExpression]
   ) = {
-    val a = ActiveSkill("ni", NoEffect(), 1, 2)
-
-    a.productElementNames
-
-    ???
+    div(
+      asExpression.now().render
+    )
     // div(
     //   div(
     //     Awakening.values
@@ -91,4 +107,5 @@ object SkillSelector {
     //   )
     // )
   }
+
 }

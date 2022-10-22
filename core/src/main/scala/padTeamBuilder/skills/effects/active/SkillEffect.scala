@@ -47,45 +47,56 @@ object SkillEffect {
   ): Boolean = {
     val thisClass = thisEffect.getClass
     val thatClass = thatEffect.getClass
-    (
-      thisClass.isAssignableFrom(thatClass) ||
-        thatClass.isAssignableFrom(thisClass)
-    ) && {
-      val alwaysMatch = List(
-        classOf[NoEffect],
-        classOf[MultiEffect],
-        classOf[EvolvingEffect],
-        classOf[ConditionalEffect],
-        classOf[Transform]
-      )
-      if (
-        alwaysMatch.exists(c =>
-          c.isAssignableFrom(thisClass) &&
-            c.isAssignableFrom(thatClass)
+    if (thatClass == classOf[MultiEffect]) {
+      thatEffect
+        .asInstanceOf[MultiEffect]
+        .effects
+        .exists(e => leq(thisEffect, e))
+    } else if (thisClass == classOf[MultiEffect]) {
+      thisEffect
+        .asInstanceOf[MultiEffect]
+        .effects
+        .exists(e => leq(e, thatEffect))
+    } else
+      (
+        thisClass.isAssignableFrom(thatClass) ||
+          thatClass.isAssignableFrom(thisClass)
+      ) && {
+        val alwaysMatch = List(
+          classOf[NoEffect],
+          classOf[MultiEffect],
+          classOf[EvolvingEffect],
+          classOf[ConditionalEffect],
+          classOf[Transform]
         )
-      ) true
-      else {
-        def getFieldsMap(p: SkillEffectGeneric): Map[String, Any] = {
-          p.productElementNames
-            .zip(p.productIterator)
-            .map((name, value) => name -> value)
-            .toMap
-        }
-        val thisFields = getFieldsMap(thisEffect)
-        val thatFields = getFieldsMap(thatEffect)
-        def containsAllLeq(
-            m1: Map[String, Any],
-            m2: Map[String, Any]
-        ): Boolean =
-          m1.forall((k, v) =>
-            m2
-              .get(k)
-              .map(thatVal => SkillEffect.leq(v, thatVal))
-              .getOrElse(false)
+        if (
+          alwaysMatch.exists(c =>
+            c.isAssignableFrom(thisClass) &&
+              c.isAssignableFrom(thatClass)
           )
-        containsAllLeq(thisFields, thatFields)
+        ) true
+        else {
+          def getFieldsMap(p: SkillEffectGeneric): Map[String, Any] = {
+            p.productElementNames
+              .zip(p.productIterator)
+              .map((name, value) => name -> value)
+              .toMap
+          }
+          val thisFields = getFieldsMap(thisEffect)
+          val thatFields = getFieldsMap(thatEffect)
+          def containsAllLeq(
+              m1: Map[String, Any],
+              m2: Map[String, Any]
+          ): Boolean =
+            m1.forall((k, v) =>
+              m2
+                .get(k)
+                .map(thatVal => SkillEffect.leq(v, thatVal))
+                .getOrElse(false)
+            )
+          containsAllLeq(thisFields, thatFields)
+        }
       }
-    }
   }
 
   def leq(e1: Any, e2: Any): Boolean = {
@@ -126,7 +137,7 @@ case class ConditionalEffect(
       s"$condition[\n$effect\n]"
     )
 
-sealed trait ConditionalComponent
+sealed trait ConditionalComponent extends SkillEffectGeneric
 
 case class ConditionalComponentHP(hpReq: Int, needsToBeMore: Boolean)
     extends ConditionalComponent
@@ -154,7 +165,7 @@ case class CounterAttackSkill(
     turns: Int
 ) extends SkillEffect(s"${multiplier}x $att counterattack for $turns turns. ")
 
-trait Suicide {
+trait Suicide extends SkillEffectGeneric {
   val percentLost: Double
 }
 
@@ -179,7 +190,7 @@ case class EnhanceOrbs(
     attribute: Attribute
 ) extends SkillEffect(s"Enhances $attribute orbs. ")
 
-trait Gravity {
+trait Gravity extends SkillEffectGeneric {
   val percent: Int
 }
 
@@ -196,7 +207,7 @@ case class GravityTrue(percent: Int)
       s"Reduce all enemies' current HP by $percent% of their max HP. "
     )
 
-sealed trait Heal
+sealed trait Heal extends SkillEffectGeneric
 
 case class HealFlat(
     amount: Int
@@ -243,7 +254,7 @@ case class MassAttack(
     turns: Int
 ) extends SkillEffect(s"Mass attacks for $turns turns. ")
 
-sealed trait OrbChange {
+sealed trait OrbChange extends SkillEffectGeneric {
   val atts: List[Attribute]
 }
 
@@ -332,7 +343,7 @@ case class Poison(
 
 case class Refresh() extends SkillEffect(s"Replaces all orbs. ")
 
-sealed trait RCVBoostSkill {
+sealed trait RCVBoostSkill extends SkillEffectGeneric {
   val turns: Int
 }
 case class RCVBoostMult(multiplier: Double, turns: Int)
@@ -359,7 +370,7 @@ case class RCVBoostByAttributeAndType(
       s"1+(${rcvScaling}x) RCV for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
     )
 
-sealed trait Shield {
+sealed trait Shield extends SkillEffectGeneric {
   val percent: Int
   val turns: Int
 }
@@ -386,7 +397,7 @@ case class ShieldScalingByAwakening(
       s"${reductionScaling}% damage reduction for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     ) {}
 
-trait Spike {
+trait Spike extends SkillEffectGeneric {
   val multiplier: Double
   val turns: Int
 }
@@ -407,7 +418,7 @@ case class SpikeType(
       s"${multiplier}x ATK for $cardType type for $turns turns. "
     )
 
-trait SpikeScaling {
+trait SpikeScaling extends SkillEffectGeneric {
   val turns: Int
 }
 
@@ -435,7 +446,7 @@ case class SpikeSlots(multiplier: Double, slots: List[CardSlot], turns: Int)
       s"${multiplier}x ATK for ${slots.mkString(", ")} for $turns turns. "
     )
 
-trait Transform
+trait Transform extends SkillEffectGeneric
 
 case class TransformFixed(
     targetId: Int,
@@ -451,7 +462,7 @@ case class TransformRandom(targets: List[(Int, String)])
           .mkString("\n")}"
     )
 
-trait LeadSwap
+trait LeadSwap extends SkillEffectGeneric
 case class LeadSwapThisCard()
     extends LeadSwap
     with SkillEffect(
@@ -476,7 +487,7 @@ case class Random(effects: List[ActiveSkill])
       s"Randomly activates one of the following: \n$skills"
     })
 
-trait TimeExtendSkill {
+trait TimeExtendSkill extends SkillEffectGeneric {
   val turns: Int
 }
 
@@ -514,7 +525,7 @@ case class LockOrbs(colors: List[Attribute], numOrbs: Int)
       s"Locks ${if (numOrbs < 42) s"$numOrbs " else ""}${colors.mkString(", ")} orbs. "
     )
 
-trait ChangeEnemyAttribute {
+trait ChangeEnemyAttribute extends SkillEffectGeneric {
   val att: Attribute
 }
 
@@ -534,22 +545,19 @@ case class AddCombosSkill(combos: Int, turns: Int)
       s"Adds $combos combo${if (combos == 1) "" else "s"} for $turns turns. "
     )
 
-trait Void
+trait Void extends SkillEffectGeneric
 
 case class VoidDamageAbsorb(turns: Int)
-    extends Void
-    with SkillEffect(
+    extends SkillEffect(
       s"Voids damage absorption for $turns turns. "
     )
 
 case class VoidAttributeAbsorb(turns: Int)
-    extends Void
-    with SkillEffect(
+    extends SkillEffect(
       s"Voids attribute absorption for $turns turns. "
     )
 case class VoidVoid(turns: Int)
-    extends Void
-    with SkillEffect(
+    extends SkillEffect(
       s"Voids damage void for $turns turns. "
     )
 
@@ -585,7 +593,7 @@ case class NoSkyfallSkill(turns: Int)
       s"No skyfall combos for $turns turns. "
     )
 
-trait Spinner {
+trait Spinner extends SkillEffectGeneric {
   val numSpinners: Int
   val speed: Double
   val turns: Int

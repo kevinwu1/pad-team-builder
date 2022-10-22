@@ -51,6 +51,42 @@ object CardResults {
 
   val isDesc: Var[Boolean] = Var(true)
 
+  def renderSingleCardResult(
+      card: Card,
+      supers: List[Awakening],
+      rankValue: Long
+  ): HtmlElement = {
+    p(
+      Util.renderCardThumbnailImage(card.id, card.att, card.subatt),
+      span(s"#${card.id} - ${card.name} - ${rankValue}"),
+      br(),
+      s"HP: ${card.cardStats.finalHp}",
+      br(),
+      s"ATK: ${card.cardStats.finalAtk}",
+      br(),
+      s"RCV: ${card.cardStats.finalRcv}",
+      br(),
+      card.awakenings.map(Util.renderAwk),
+      br(),
+      card.superAwakenings.map(awk => {
+        if (!supers.contains(awk))
+          Util.renderAwk(awk).amend(className := "gray")
+        else
+          Util.renderAwk(awk)
+      }),
+      br(), {
+        val parts =
+          s"${card.activeSkill.name}(${card.activeSkill.maxLevelCd} - ${card.activeSkill.cd}): \n${card.activeSkill}"
+            .split("\n")
+            .map(span(_))
+            .toList
+        parts.tail.foldLeft(List(parts.head): List[HtmlElement])((l, p) =>
+          (l :+ br()) :+ p
+        )
+      }
+    )
+  }
+
   def renderCardResults(
       results: Signal[Vector[CardSearchResult]]
   ): HtmlElement = {
@@ -72,18 +108,7 @@ object CardResults {
             val card = t._1
             val supers = t._2
             val rank = t._3
-            div(
-              span(s"#${card.id} - ${card.name} - ${rank}"),
-              br(),
-              card.awakenings.map(Util.renderAwk),
-              br(),
-              card.superAwakenings.map(awk => {
-                if (!supers.contains(awk))
-                  Util.renderAwk(awk).amend(className := "gray")
-                else
-                  Util.renderAwk(awk)
-              })
-            )
+            renderSingleCardResult(card, supers, rank)
           })
       )
     )

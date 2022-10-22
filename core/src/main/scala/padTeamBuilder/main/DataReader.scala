@@ -17,28 +17,12 @@ import scala.io.Source
 import scala.util.Random
 
 object DataReader {
-  sealed trait ASExpression {
-    def test(t: SkillEffectGeneric): Boolean
-  }
-
-  case class ASAnd(exps: List[ASExpression]) extends ASExpression {
-    override def test(t: SkillEffectGeneric): Boolean = exps.forall(_.test(t))
-  }
-  case class ASMinMax[T <: SkillEffectGeneric](min: T, max: T)
-      extends ASExpression {
-    def test(t: SkillEffectGeneric): Boolean = {
-      min <= t && t <= max
-    }
-  }
 
   def main(arg: Array[String]): Unit = {
-    case class HasteGeneric(turns: Int) extends Haste
     println(
-      ASMinMax[HasteGeneric](
-        HasteGeneric(1),
-        HasteGeneric(4)
-      ).test(
-        HasteFixed(2)
+      SkillEffect.leq(
+        MultiEffect(List(DefenseBreak(1, 1), TimeExtendFlat(1, 2))),
+        DefenseBreak(2, 3)
       )
     )
   }
@@ -69,7 +53,17 @@ object DataReader {
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
   }
 
-  def createParsedCards(cards: Vector[Card]) = {
+  def createParsedCards() = {
+    println(s"Current dir: ${System.getProperty("user.dir")}")
+    val cardDataFile = "download_card_data.json"
+    val skillDataFile = "download_skill_data.json"
+    val cardData = readCardData(cardDataFile)
+    val skillData = readSkillData(skillDataFile)
+    println(skillData.length)
+    println("carddata length: " + cardData.size)
+    testLSParsing3(cardData, skillData)
+    val cards = parseAllCardsFromJsonCardData(cardData, skillData)
+
     val (normalCards, altCards) = cards.partition(_.id < 20000)
     val basepath = "parsed_cards.json"
     val desiredCards =
