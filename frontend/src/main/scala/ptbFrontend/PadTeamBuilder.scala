@@ -22,8 +22,13 @@ object PadTeamBuilder {
 
   val selectedAwakenings: Var[List[Awakening]] = Var(List())
 
-  val asExpression: Var[ASExpression] = Var(
-    ASMinMax[DefenseBreak](DefenseBreak(1, 1), DefenseBreak(100, 10))
+  val asExpression: Var[ASFilter] = Var(
+    // ASMinMax[DefenseBreak](
+    //   DefenseBreak(1, 1),
+    //   DefenseBreak(100, 10),
+    //   scala.Function2
+    // )
+    ???
   )
 
   val filteredCards: Signal[Vector[CardSearchResult]] =

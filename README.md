@@ -44,3 +44,7 @@ npm install jsdom
 
 in sbt shell, ~frontend/fastLinkJS
 right click index.html > open with live server
+
+
+todo: in results, - to exclude effect or + to include as or ls effect
+cache json data in browser

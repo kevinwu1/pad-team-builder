@@ -14,34 +14,106 @@ import scala.deriving.*
 
 object SkillSelector {
 
-  sealed trait ASExpression {
+  sealed trait ASFilter {
     def test(t: SkillEffect): Boolean
-    def render: HtmlElement
+    def render(
+        contextBuilder: ASFilter => ASFilter,
+        asFilterState: Var[ASFilter]
+    ): HtmlElement
   }
 
-  case class ASNone() extends ASExpression {
+  case class ASNone() extends ASFilter {
     override def test(t: SkillEffect) = true
-    override def render = div()
+    override def render(
+        contextBuilder: ASFilter => ASFilter,
+        asFilterState: Var[ASFilter]
+    ) = div(
+      select(
+        option(
+          value := "defensebreak",
+          "defense break"
+        )
+      )
+    )
   }
 
-  case class ASAnd(exps: List[ASExpression]) extends ASExpression {
+  case class ASAnd(exps: List[ASFilter]) extends ASFilter {
     override def test(t: SkillEffect): Boolean = exps.forall(_.test(t))
-    override def render = div({
-      val r = exps.map(e => p(e.render))
+    override def render(
+        myContextBuilder: ASFilter => ASFilter,
+        asFilterState: Var[ASFilter]
+    ) = div({
+      val r = exps.zipWithIndex.map((e, index) =>
+        p(
+          e.render(
+            contextBuilder = (newFilter: ASFilter) => {
+              myContextBuilder(
+                ASAnd(
+                  exps.patch(index, List(newFilter), 1)
+                )
+              )
+            },
+            asFilterState
+          )
+        )
+      )
       r.tail.foldLeft(List(r.head))((l, i) => (l :+ p("and")) :+ i)
     })
   }
-  case class ASMinMax[T <: SkillEffect](min: T, max: T) extends ASExpression {
+  case class ASMinMax[T <: SkillEffect](
+      min: T,
+      max: T,
+      mapFun: Map[String, Any] => T
+  ) extends ASFilter {
     def test(t: SkillEffect): Boolean = {
       (min <= t) && (t <= max)
     }
 
-    override def render = {
+    def convert[T](s: String, targetClass: Class[T]): T = {
+      val sReal = if (s.isEmpty()) "999999" else s
+      (targetClass match {
+        case c if c == classOf[Long] => sReal.toLong
+      }).asInstanceOf[T]
+    }
+
+    override def render(
+        myContextBuilder: ASFilter => ASFilter,
+        asFilterState: Var[ASFilter]
+    ) = {
       val names = min.productElementNames.toList
       val vals = min.productIterator.zip(max.productIterator).toList
       div(
         div(min.getClass().getSimpleName()),
-        names.zip(vals).map((n, t) => div(s"${t._1} <= $n <= ${t._2}"))
+        names
+          .zip(vals)
+          .map((fieldName, fieldValTup) => {
+            div(
+              input(
+                typ := "number",
+                inContext { thisNode =>
+                  onBlur
+                    .mapTo(thisNode.ref.value)
+                    .map(v => {
+                      val newFieldsMap = min.productElementNames
+                        .zip(min.productIterator)
+                        .map((fname, fval) => {
+                          fname -> (
+                            if (fname == fieldName)
+                              convert(v, fval.getClass)
+                            else fval
+                          )
+                        })
+                        .toMap
+
+                      myContextBuilder(
+                        this.copy(min = mapFun(newFieldsMap))
+                      )
+                    }) --> asFilterState
+                }
+              ),
+              div(s" <= $fieldName <= ")
+            )
+          })
       )
     }
   }
@@ -67,45 +139,13 @@ object SkillSelector {
   }
 
   def renderSkillSelector(
-      asExpression: Var[ASExpression]
+      asFilterState: Var[ASFilter]
   ) = {
     div(
-      asExpression.now().render
+      asFilterState
+        .now()
+        .render(x => x, asFilterState)
     )
-    // div(
-    //   div(
-    //     Awakening.values
-    //       .filter(!_.name.startsWith("Unknown"))
-    //       .filter(_ != Awakening.None)
-    //       .filter(_ != Awakening.Super)
-    //       .map(awk => {
-    //         val ele = Util.renderAwk(awk)
-    //         ele.amend(
-    //           onClick.map((_) => {
-    //             selectedAwakenings.now() :+ awk
-    //           }) --> selectedAwakenings
-    //         )
-    //       }): _*
-    //   ),
-    //   div(
-    //     h1("Selected: "),
-    //     div(
-    //       children <-- selectedAwakenings.signal
-    //         .map(a => {
-    //           a.zipWithIndex.map((awk, ind) => {
-    //             Util
-    //               .renderAwk(awk)
-    //               .amend(
-    //                 onClick.map((_) => {
-    //                   val l = selectedAwakenings.now()
-    //                   l.slice(0, ind) ++ l.slice(ind + 1, l.size)
-    //                 }) --> selectedAwakenings
-    //               )
-    //           })
-    //         })
-    //     )
-    //   )
-    // )
   }
 
 }

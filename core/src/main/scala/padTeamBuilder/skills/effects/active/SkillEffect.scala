@@ -11,6 +11,7 @@ import padTeamBuilder.skills.ActiveSkill
 //is this a monoid?
 trait SkillEffectGeneric extends Product {
   def <=(that: SkillEffectGeneric): Boolean = SkillEffect.leq(this, that)
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric
 }
 
 sealed trait SkillEffect(str: String) extends SkillEffectGeneric {
@@ -38,6 +39,7 @@ sealed trait SkillEffect(str: String) extends SkillEffectGeneric {
     }
   }
   override def toString = str
+
 }
 
 object SkillEffect {
@@ -113,13 +115,20 @@ object SkillEffect {
   }
 }
 
-case class NoEffect() extends SkillEffect("")
+case class NoEffect() extends SkillEffect("") {
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric = ???
+}
 
 case class MultiEffect(effects: List[SkillEffect])
     extends SkillEffect(
       effects.mkString("\n")
       // effects.zipWithIndex.map((e, i) => s"${i + 1}. $e").mkString("\n")
-    )
+    ) {
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+}
 
 case class EvolvingEffect(loop: Boolean, skills: List[ActiveSkill])
     extends SkillEffect(
@@ -128,16 +137,25 @@ case class EvolvingEffect(loop: Boolean, skills: List[ActiveSkill])
         }: \n${skills.zipWithIndex
           .map((skill, i) => s"Stage ${i + 1} (cd ${skill.cdStr}): \n${skill.skillEffect}")
           .mkString("\n")}"
-    )
+    ) {
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+    fieldName match {
+      case "loop" => this.copy(loop = newValue.asInstanceOf[Boolean])
+    }
+}
 
 case class ConditionalEffect(
     condition: ConditionalComponent,
     effect: SkillEffect
 ) extends SkillEffect(
       s"$condition[\n$effect\n]"
-    )
+    ) {
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+}
 
-sealed trait ConditionalComponent extends SkillEffectGeneric
+sealed trait ConditionalComponent extends SkillEffectGeneric {
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+}
 
 case class ConditionalComponentHP(hpReq: Int, needsToBeMore: Boolean)
     extends ConditionalComponent
@@ -157,13 +175,25 @@ case class ConditionalComponentFloor(floorReq: Int, needsToBeAfter: Boolean)
 
 case class ChangeTheWorld(
     seconds: Int
-) extends SkillEffect(s"Move orbs freely for ${seconds} seconds. ")
+) extends SkillEffect(s"Move orbs freely for ${seconds} seconds. ") {
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+    fieldName match {
+      case "seconds" => this.copy(seconds = newValue.asInstanceOf[Int])
+    }
+}
 
 case class CounterAttackSkill(
     multiplier: Int,
     att: Attribute,
     turns: Int
-) extends SkillEffect(s"${multiplier}x $att counterattack for $turns turns. ")
+) extends SkillEffect(s"${multiplier}x $att counterattack for $turns turns. ") {
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+    fieldName match {
+      case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Int])
+      case "att"        => this.copy(att = newValue.asInstanceOf[Attribute])
+      case "turns"      => this.copy(turns = newValue.asInstanceOf[Int])
+    }
+}
 
 trait Suicide extends SkillEffectGeneric {
   val percentLost: Double

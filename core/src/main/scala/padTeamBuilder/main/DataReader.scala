@@ -19,26 +19,39 @@ import scala.util.Random
 object DataReader {
 
   def main(arg: Array[String]): Unit = {
-    println(
-      SkillEffect.leq(
-        MultiEffect(List(DefenseBreak(1, 1), TimeExtendFlat(1, 2))),
-        DefenseBreak(2, 3)
-      )
-    )
+
+    inline def getSomeVals[T <: SkillEffect](
+        instance: T,
+        fieldName: String,
+        newValue: Any
+    )(using
+        x: Mirror.ProductOf[T]
+    ): String = {
+      val s = helper[x.MirroredElemTypes]
+
+      s.mkString(",")
+    }
+
+    inline def helper[T <: Tuple]: List[Int] = inline erasedValue[T] match {
+      case _: EmptyTuple  => Nil
+      case _: (Int *: ts) => 0 :: helper[ts]
+      case _: (t *: ts)   => -1 :: helper[ts]
+    }
+
   }
 
-  inline def getSomeVals[T <: SkillEffect](using
-      x: Mirror.ProductOf[T]
-  ): String = {
-    val s = helper[x.MirroredElemTypes]
-    s.mkString(",")
-  }
+  // inline def getSomeVals[T <: SkillEffect](using
+  //     x: Mirror.ProductOf[T]
+  // ): String = {
+  //   val s = helper[x.MirroredElemTypes]
+  //   s.mkString(",")
+  // }
 
-  inline def helper[T <: Tuple]: List[Int] = inline erasedValue[T] match {
-    case _: EmptyTuple  => Nil
-    case _: (Int *: ts) => 0 :: helper[ts]
-    case _: (t *: ts)   => -1 :: helper[ts]
-  }
+  // inline def helper[T <: Tuple]: List[Int] = inline erasedValue[T] match {
+  //   case _: EmptyTuple  => Nil
+  //   case _: (Int *: ts) => 0 :: helper[ts]
+  //   case _: (t *: ts)   => -1 :: helper[ts]
+  // }
 
   def test() = {
 
