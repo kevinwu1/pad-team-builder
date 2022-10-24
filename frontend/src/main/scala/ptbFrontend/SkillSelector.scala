@@ -22,19 +22,58 @@ object SkillSelector {
     ): HtmlElement
   }
 
-  case class ASNone() extends ASFilter {
-    override def test(t: SkillEffect) = true
+  def lookup(k: String, m: Map[String, Option[ASFilter]]) = {
+    println("looking up key " + k)
+    m(k)
+  }
+
+  case class ASSelect(child: Option[ASFilter], selectedName: String)
+      extends ASFilter {
+    override def test(t: SkillEffect) = child.map(_.test(t)).getOrElse(true)
     override def render(
         contextBuilder: ASFilter => ASFilter,
         asFilterState: Var[ASFilter]
-    ) = div(
-      select(
-        option(
-          value := "defensebreak",
-          "defense break"
+    ) = {
+      val options: Map[String, Option[ASFilter]] = Map(
+        "" -> None,
+        "DefenseBreak" -> Some(
+          ASMinMax(
+            DefenseBreak(0, 1),
+            DefenseBreak(100, 10)
+          )
         )
       )
-    )
+      div(
+        select(
+          options
+            .map((k, v) => {
+              option(
+                value := k,
+                k
+                // defaultSelected := if (k == selectedName) "true"
+              ).amend(
+                (if (selectedName == k) List(defaultSelected := true)
+                 else List()): _*
+              )
+            })
+            .toList,
+          onChange.mapToValue.map(v =>
+            contextBuilder(
+              ASSelect(
+                options(v),
+                v
+              )
+            )
+          ) --> asFilterState
+        ),
+        child.map(
+          _.render(
+            x => contextBuilder(ASSelect(Option(x), selectedName)),
+            asFilterState
+          )
+        )
+      )
+    }
   }
 
   case class ASAnd(exps: List[ASFilter]) extends ASFilter {
@@ -60,20 +99,27 @@ object SkillSelector {
       r.tail.foldLeft(List(r.head))((l, i) => (l :+ p("and")) :+ i)
     })
   }
-  case class ASMinMax[T <: SkillEffect](
+  case class ASMinMax[T <: SkillEffectGeneric](
       min: T,
-      max: T,
-      mapFun: Map[String, Any] => T
+      max: T
   ) extends ASFilter {
     def test(t: SkillEffect): Boolean = {
       (min <= t) && (t <= max)
     }
 
-    def convert[T](s: String, targetClass: Class[T]): T = {
+    // https://www.scala-js.org/doc/semantics.html
+    def isIntType(c: Class[_]): Boolean = {
+      c == classOf[java.lang.Byte] || c == classOf[java.lang.Integer]
+    }
+
+    def convert(s: String, targetClass: Class[_]): Any = {
       val sReal = if (s.isEmpty()) "999999" else s
-      (targetClass match {
-        case c if c == classOf[Long] => sReal.toLong
-      }).asInstanceOf[T]
+      if (isIntType(targetClass))
+        sReal.toInt
+      else
+        targetClass match {
+          case c if c == classOf[Attribute] => Attribute.HEART
+        }
     }
 
     override def render(
@@ -83,35 +129,52 @@ object SkillSelector {
       val names = min.productElementNames.toList
       val vals = min.productIterator.zip(max.productIterator).toList
       div(
+        className := min.toString + ",,," + max.toString,
         div(min.getClass().getSimpleName()),
         names
           .zip(vals)
           .map((fieldName, fieldValTup) => {
+            val minVal = fieldValTup._1
+            val maxVal = fieldValTup._2
+            val inputType = if (isIntType(minVal.getClass())) "number" else ""
             div(
               input(
-                typ := "number",
+                typ := inputType,
+                value := minVal.toString,
                 inContext { thisNode =>
                   onBlur
                     .mapTo(thisNode.ref.value)
-                    .map(v => {
-                      val newFieldsMap = min.productElementNames
-                        .zip(min.productIterator)
-                        .map((fname, fval) => {
-                          fname -> (
-                            if (fname == fieldName)
-                              convert(v, fval.getClass)
-                            else fval
-                          )
-                        })
-                        .toMap
-
+                    .map(newValue => {
                       myContextBuilder(
-                        this.copy(min = mapFun(newFieldsMap))
+                        this.copy(min =
+                          min.withNewField(
+                            fieldName,
+                            convert(newValue, minVal.getClass())
+                          )
+                        )
                       )
                     }) --> asFilterState
                 }
               ),
-              div(s" <= $fieldName <= ")
+              div(s" <= $fieldName (${minVal.getClass()}) <= "),
+              input(
+                typ := inputType,
+                value := maxVal.toString,
+                inContext { thisNode =>
+                  onBlur
+                    .mapTo(thisNode.ref.value)
+                    .map(newValue => {
+                      myContextBuilder(
+                        this.copy(max =
+                          max.withNewField(
+                            fieldName,
+                            convert(newValue, maxVal.getClass())
+                          )
+                        )
+                      )
+                    }) --> asFilterState
+                }
+              )
             )
           })
       )
@@ -131,20 +194,18 @@ object SkillSelector {
     case _: (t *: ts)   => -1 :: helper[ts]
   }
 
-  def renderSkillSelect(using
-      x: Mirror.ProductOf[DefenseBreak]
-  ): HtmlElement = {
-    /**/
-    ???
-  }
+  // def renderSkillSelect(using
+  //     x: Mirror.ProductOf[DefenseBreak]
+  // ): HtmlElement = {
+  //   /**/
+  //   ???
+  // }
 
   def renderSkillSelector(
       asFilterState: Var[ASFilter]
   ) = {
     div(
-      asFilterState
-        .now()
-        .render(x => x, asFilterState)
+      child <-- asFilterState.signal.map(_.render(x => x, asFilterState))
     )
   }
 

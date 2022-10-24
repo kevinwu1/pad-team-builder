@@ -1,5 +1,7 @@
 package ptbFrontend
 
+import com.raquo.airstream.core.Observer
+import com.raquo.airstream.web._
 import com.raquo.laminar.api.L._
 import org.scalajs.dom
 import org.scalajs.dom._
@@ -7,12 +9,10 @@ import padTeamBuilder.model._
 import padTeamBuilder.skills._
 import padTeamBuilder.skills.effects.active._
 import padTeamBuilder.skills.effects.leader._
-import com.raquo.airstream.web._
+import play.api.libs.json._
+
 import CardResults.CardSearchResult
 import SkillSelector._
-
-import play.api.libs.json._
-import com.raquo.airstream.core.Observer
 
 object PadTeamBuilder {
 
@@ -22,14 +22,9 @@ object PadTeamBuilder {
 
   val selectedAwakenings: Var[List[Awakening]] = Var(List())
 
-  val asExpression: Var[ASFilter] = Var(
-    // ASMinMax[DefenseBreak](
-    //   DefenseBreak(1, 1),
-    //   DefenseBreak(100, 10),
-    //   scala.Function2
-    // )
-    ???
-  )
+  val asExpression: Var[ASFilter] = Var({
+    ASSelect(None, "")
+  })
 
   val filteredCards: Signal[Vector[CardSearchResult]] =
     selectedAwakenings.signal
@@ -57,4 +52,5 @@ object PadTeamBuilder {
     val containerNode = dom.document.querySelector("#root")
     render(containerNode, rootElement)
   }
+
 }

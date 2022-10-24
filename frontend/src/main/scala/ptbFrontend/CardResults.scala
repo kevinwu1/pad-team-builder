@@ -8,6 +8,8 @@ import org.scalajs.dom._
 
 object CardResults {
 
+  val RESULTS_MAX = 50
+
   type CardSearchResult = (Card, List[Awakening])
   type CardRanker = CardSearchResult => Long
 
@@ -102,7 +104,7 @@ object CardResults {
               o.reverse
             else o
           })
-          .map(_.slice(0, 200))
+          .map(_.slice(0, RESULTS_MAX))
           .map(v => v.map((csr, rank) => (csr._1, csr._2, rank)))
           .split(t => (t._1.id, t._2, t._3))((key, t, sig) => {
             val card = t._1
