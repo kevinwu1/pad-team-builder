@@ -146,21 +146,21 @@ object ActiveSkill {
           DRange(args(1) / 100, args(2) / 100),
           DAttribute(Attribute.from(args(0))),
           DSingle()
-        ) and SuicideFull()
+        ) and Suicide(100)
       case 85 =>
         ImmediateDamage(
           DRange(args(1) / 100, args(2) / 100),
           DAttribute(Attribute.from(args(0))),
           DAll()
         ) and
-          SuicideFull()
+          Suicide(100)
       case 86 =>
         ImmediateDamage(
           DFixed(args(1)),
           DAttribute(Attribute.from(args(0))),
           DSingle()
         ) and
-          (if (args(3) == 0) SuicideFull() else SuicidePartial(100 - args(3)))
+          Suicide(100 - args(3))
       case 88 =>
         SpikeType(
           multiplier = args(2) / 100.0,
@@ -354,7 +354,7 @@ object ActiveSkill {
       case 189 => OrbTrace()
       case 191 => VoidVoid(args(0))
       case 195 =>
-        if (args(0) == 0) SuicideFull() else SuicidePartial(100 - args(0))
+        Suicide(100 - args(0))
       case 196 => UnmatchableClear(args(0))
       case 202 => TransformFixed(targetId = args(0), cardData(args(0)).name)
       case 205 =>

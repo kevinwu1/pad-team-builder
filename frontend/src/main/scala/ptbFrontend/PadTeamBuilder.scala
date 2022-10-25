@@ -31,16 +31,20 @@ object PadTeamBuilder {
       .combineWith(cards.signal)
       .combineWith(asExpression.signal)
       .mapN((awaks, cards, asExpression) => {
-        val r = cards
-          .map(card => {
-            val (hasRequiredAwakenings, supers) =
-              card.containsAwakenings(awaks, true)
-            (card, hasRequiredAwakenings, supers)
-          })
-          .filter(_._2)
-          .filter(t => asExpression.test(t._1.activeSkill.skillEffect))
-          .map(t => (t._1, t._3))
-        r
+        if (asExpression == ASSelect(None, ""))
+          Vector[(Card, List[Awakening])]()
+        else {
+          val r = cards
+            .map(card => {
+              val (hasRequiredAwakenings, supers) =
+                card.containsAwakenings(awaks, true)
+              (card, hasRequiredAwakenings, supers)
+            })
+            .filter(_._2)
+            .filter(t => asExpression.test(t._1.activeSkill.skillEffect))
+            .map(t => (t._1, t._3))
+          r
+        }
       })
 
   def main(args: Array[String]): Unit = {

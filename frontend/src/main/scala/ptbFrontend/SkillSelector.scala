@@ -47,12 +47,16 @@ object SkillSelector {
         ),
         "EvolvingEffect" -> Some(
           ASSingle(EvolvingEffect(false, List()))
-        )
+        ),
+        "Conditional" -> Some(ASSingle(ConditionalEffect(null, null))),
+        "ChangeTheWorld" ->
+          Some(ASMinMax(ChangeTheWorld(0), ChangeTheWorld(100)))
       )
       div(
         select(
-          options
-            .map((k, v) => {
+          options.keys.toVector.sorted
+            .map(k => {
+              val v = options(k)
               option(
                 value := k,
                 k
@@ -148,52 +152,58 @@ object SkillSelector {
       div(
         className := min.toString + ",,," + max.toString,
         div(min.getClass().getSimpleName()),
-        names
-          .zip(vals)
-          .map((fieldName, fieldValTup) => {
-            val minVal = fieldValTup._1
-            val maxVal = fieldValTup._2
-            val inputType = if (isIntType(minVal.getClass())) "number" else ""
-            div(
-              input(
-                typ := inputType,
-                value := minVal.toString,
-                inContext { thisNode =>
-                  onBlur
-                    .mapTo(thisNode.ref.value)
-                    .map(newValue => {
-                      myContextBuilder(
-                        this.copy(min =
-                          min.withNewField(
-                            fieldName,
-                            convert(newValue, minVal.getClass())
+        div(
+          className := "minMaxContainer",
+          names
+            .zip(vals)
+            .map((fieldName, fieldValTup) => {
+              val minVal = fieldValTup._1
+              val maxVal = fieldValTup._2
+              val inputType = if (isIntType(minVal.getClass())) "number" else ""
+              p(
+                className := "minMaxItem",
+                input(
+                  typ := inputType,
+                  value := minVal.toString,
+                  inContext { thisNode =>
+                    onBlur
+                      .mapTo(thisNode.ref.value)
+                      .map(newValue => {
+                        myContextBuilder(
+                          this.copy(min =
+                            min.withNewField(
+                              fieldName,
+                              convert(newValue, minVal.getClass())
+                            )
                           )
                         )
-                      )
-                    }) --> asFilterState
-                }
-              ),
-              div(s" <= $fieldName (${minVal.getClass()}) <= "),
-              input(
-                typ := inputType,
-                value := maxVal.toString,
-                inContext { thisNode =>
-                  onBlur
-                    .mapTo(thisNode.ref.value)
-                    .map(newValue => {
-                      myContextBuilder(
-                        this.copy(max =
-                          max.withNewField(
-                            fieldName,
-                            convert(newValue, maxVal.getClass())
+                      }) --> asFilterState
+                  },
+                  className := s"minMax minMax$inputType"
+                ),
+                div(s" <= $fieldName <= "),
+                input(
+                  typ := inputType,
+                  value := maxVal.toString,
+                  inContext { thisNode =>
+                    onBlur
+                      .mapTo(thisNode.ref.value)
+                      .map(newValue => {
+                        myContextBuilder(
+                          this.copy(max =
+                            max.withNewField(
+                              fieldName,
+                              convert(newValue, maxVal.getClass())
+                            )
                           )
                         )
-                      )
-                    }) --> asFilterState
-                }
+                      }) --> asFilterState
+                  },
+                  className := s"minMax minMax$inputType"
+                )
               )
-            )
-          })
+            })
+        )
       )
     }
   }

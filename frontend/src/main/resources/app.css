@@ -1,3 +1,13 @@
 .gray {
   filter: grayscale(1)
 }
+
+
+.minMaxItem div,
+.minMaxItem input {
+  display: inline
+}
+
+.minMaxnumber {
+  width: 50px
+}

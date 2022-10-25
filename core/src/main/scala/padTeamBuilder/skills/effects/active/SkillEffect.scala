@@ -201,23 +201,12 @@ case class CounterAttackSkill(
     }
 }
 
-trait Suicide extends SkillEffectGeneric {
-  val percentLost: Double
-}
-
-case class SuicidePartial(percentLost: Double)
-    extends Suicide
-    with SkillEffect(s"HP reduced by ${percentLost}%. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
-    fieldName match {
-      case "percentLost" => this.copy(percentLost = newValue.asInstanceOf[Int])
-    }
-}
-
-case class SuicideFull(percentLost: Double = 100.0)
-    extends Suicide
-    with SkillEffect(s"HP reduced to 1. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+case class Suicide(percentLost: Double)
+    extends SkillEffect(s"HP reduced by ${percentLost}%. ") {
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percentLost" => this.copy(percentLost = newValue.asInstanceOf[Int])
     }

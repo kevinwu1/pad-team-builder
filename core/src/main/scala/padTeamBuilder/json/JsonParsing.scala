@@ -56,9 +56,8 @@ object JsonParsing {
     Json.format[ChangeTheWorld]
   implicit val formatCounterAttackSkill: Format[CounterAttackSkill] =
     Json.format[CounterAttackSkill]
-  implicit val formatSuicidePartial: Format[SuicidePartial] =
-    Json.format[SuicidePartial]
-  implicit val formatSuicideFull: Format[SuicideFull] = Json.format[SuicideFull]
+  implicit val formatSuicide: Format[Suicide] =
+    Json.format[Suicide]
   implicit val formatDefenseBreak: Format[DefenseBreak] =
     Json.format[DefenseBreak]
   implicit val formatDelay: Format[Delay] = Json.format[Delay]
