@@ -41,6 +41,12 @@ object SkillSelector {
             DefenseBreak(0, 1),
             DefenseBreak(100, 10)
           )
+        ),
+        "Transform" -> Some(
+          ASSingle(Transform())
+        ),
+        "EvolvingEffect" -> Some(
+          ASSingle(EvolvingEffect(false, List()))
         )
       )
       div(
@@ -73,6 +79,17 @@ object SkillSelector {
           )
         )
       )
+    }
+  }
+
+  case class ASSingle[T <: SkillEffectGeneric](skillEffect: T)
+      extends ASFilter {
+    override def test(se: SkillEffect) = skillEffect <= se && se <= skillEffect
+    override def render(
+        contextBuilder: ASFilter => ASFilter,
+        asFilterState: Var[ASFilter]
+    ) = {
+      div()
     }
   }
 

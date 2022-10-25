@@ -19,7 +19,11 @@ import scala.util.Random
 object DataReader {
 
   def main(arg: Array[String]): Unit = {
-    println((1: Any).getClass)
+    val t = new Haste(2)
+    val t2 = HasteRandom(3, 7)
+    val t3 = new Haste(2)
+    println(t <= t2)
+    println(t2 <= t3)
   }
   //   inline def getSomeVals[T <: SkillEffect](
   //     instance: T,

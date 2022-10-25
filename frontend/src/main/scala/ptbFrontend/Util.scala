@@ -36,7 +36,7 @@ object Util {
     val basex = 0
     val basey = 0
     val col = (id - 1 + CARDS_PER_ROW) % CARDS_PER_ROW
-    val row = (id / CARDS_PER_ROW) % CARDS_PER_ROW
+    val row = ((id - 1) / CARDS_PER_ROW) % CARDS_PER_ROW
     val x = basex + DIM * col
     val y = basey + DIM * row
 

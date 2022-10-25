@@ -78,14 +78,20 @@ object SkillEffect {
           )
         ) true
         else {
-          def getFieldsMap(p: SkillEffectGeneric): Map[String, Any] = {
+          val commonFields =
+            thisEffect.productElementNames.toSet & thatEffect.productElementNames.toSet
+          def getFieldsMap(
+              p: SkillEffectGeneric,
+              commonFields: Set[String]
+          ): Map[String, Any] = {
             p.productElementNames
               .zip(p.productIterator)
+              .filter(t => commonFields.contains(t._1))
               .map((name, value) => name -> value)
               .toMap
           }
-          val thisFields = getFieldsMap(thisEffect)
-          val thatFields = getFieldsMap(thatEffect)
+          val thisFields = getFieldsMap(thisEffect, commonFields)
+          val thatFields = getFieldsMap(thatEffect, commonFields)
           def containsAllLeq(
               m1: Map[String, Any],
               m2: Map[String, Any]
@@ -705,15 +711,22 @@ case class SpikeSlots(multiplier: Double, slots: List[CardSlot], turns: Int)
     }
 }
 
-trait Transform extends SkillEffectGeneric
+class Transform extends SkillEffectGeneric {
+  override def canEqual(that: Any): Boolean =
+    that.getClass() == classOf[Transform]
+  override def productArity: Int = 0
+  override def productElement(n: Int): Any = ???
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric = ???
+}
 
 case class TransformFixed(
     targetId: Int,
     targetName: String
 ) extends Transform
-    with SkillEffect(s"Transform into #$targetId - $targetName") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
-}
+    with SkillEffect(s"Transform into #$targetId - $targetName") {}
 
 case class TransformRandom(targets: List[(Int, String)])
     extends Transform
@@ -721,9 +734,7 @@ case class TransformRandom(targets: List[(Int, String)])
       s"Transforms randomly into one of the following: \n${targets.zipWithIndex
           .map((targ, ind) => s"${ind + 1}. ${targ._1} - ${targ._2}")
           .mkString("\n")}"
-    ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
-}
+    ) {}
 
 trait LeadSwap extends SkillEffectGeneric
 case class LeadSwapThisCard()
@@ -804,25 +815,47 @@ case class AttributeChangeSelf(turns: Int, att: Attribute)
     }
 }
 
-trait Haste extends SkillEffectGeneric {
-  val turns: Int
+class Haste(t: Int) extends SkillEffectGeneric {
+  val turns: Int = t
+  override def canEqual(that: Any): Boolean = that.getClass() == classOf[Haste]
+
+  override def productElement(n: Int): Any = if (n == 0) turns else ???
+
+  override def productElementName(n: Int): String = if (n == 0) "turns" else ???
+
+  override def productArity: Int = 1
+
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric = {
+    fieldName match {
+      case "turns" => Haste(newValue.asInstanceOf[Int])
+    }
+  }
 }
 
-case class HasteFixed(turns: Int)
-    extends Haste
+case class HasteFixed(override val turns: Int)
+    extends Haste(turns)
     with SkillEffect(s"Team skills charged by $turns turns. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
 }
 
-case class HasteRandom(turns: Int, turnsMax: Int)
-    extends Haste
+case class HasteRandom(override val turns: Int, turnsMax: Int)
+    extends Haste(turns)
     with SkillEffect(
       s"Team skills charged by $turns-$turnsMax turns at random. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns"    => this.copy(turns = newValue.asInstanceOf[Int])
       case "turnsMax" => this.copy(turnsMax = newValue.asInstanceOf[Int])
