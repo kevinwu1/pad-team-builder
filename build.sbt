@@ -62,5 +62,6 @@ lazy val frontend = project
       "com.raquo" %%% "laminar" % "0.13.1" // Requires Scala.js >= 1.5.0
     ),
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv(),
-    scalaJSUseMainModuleInitializer := true
+    scalaJSUseMainModuleInitializer := true,
+    Compile / mainClass := Some("ptbFrontend.PadTeamBuilder")
   )

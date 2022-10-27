@@ -119,7 +119,7 @@ object Util {
         cards.update(v => v ++ newCards)
       })(unsafeWindowOwner)
     }
-    (0 to 9).foldLeft(() => ())((cb, i) =>
+    (0 to 1).foldLeft(() => ())((cb, i) =>
       () => getCards(s"parsed_cards_${i}.json", cards, cb)
     )()
   }

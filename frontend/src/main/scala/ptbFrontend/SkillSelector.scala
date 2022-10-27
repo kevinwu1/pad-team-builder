@@ -8,6 +8,7 @@ import org.scalajs.dom.raw.HTMLElement
 import padTeamBuilder.model._
 import padTeamBuilder.skills._
 import padTeamBuilder.skills.effects.active._
+import padTeamBuilder.util.Util
 
 import scala.compiletime._
 import scala.deriving.*
@@ -50,7 +51,13 @@ object SkillSelector {
         ),
         "Conditional" -> Some(ASSingle(ConditionalEffect(null, null))),
         "ChangeTheWorld" ->
-          Some(ASMinMax(ChangeTheWorld(0), ChangeTheWorld(100)))
+          Some(ASMinMax(ChangeTheWorld(0), ChangeTheWorld(100))),
+        "CounterAttack" -> Some(
+          ASMinMax(
+            CounterAttackSkill(0, Attribute.NONE, 0),
+            CounterAttackSkill(9999, Attribute.NONE, 9999)
+          )
+        )
       )
       div(
         select(
@@ -128,19 +135,116 @@ object SkillSelector {
       (min <= t) && (t <= max)
     }
 
-    // https://www.scala-js.org/doc/semantics.html
-    def isIntType(c: Class[_]): Boolean = {
-      c == classOf[java.lang.Byte] || c == classOf[java.lang.Integer]
-    }
-
     def convert(s: String, targetClass: Class[_]): Any = {
       val sReal = if (s.isEmpty()) "999999" else s
-      if (isIntType(targetClass))
+      if (Util.isIntType(targetClass))
         sReal.toInt
       else
         targetClass match {
-          case c if c == classOf[Attribute] => Attribute.HEART
+          case c if classOf[Attribute].isAssignableFrom(c) =>
+            Attribute.valueOf(s)
         }
+    }
+
+    def renderValueInput(
+        v: Any,
+        newValueHandler: String => ASFilter,
+        asFilterState: Var[ASFilter]
+    ): HtmlElement = {
+      input(
+        typ := "number",
+        value := v.toString,
+        inContext { thisNode =>
+          onBlur
+            .mapTo(thisNode.ref.value)
+            .map(newValueHandler) --> asFilterState
+        },
+        className := s"minMax minMaxnumber"
+      )
+    }
+
+    def renderMinMax(
+        minVal: Any,
+        maxVal: Any,
+        myContextBuilder: ASFilter => ASFilter,
+        asFilterState: Var[ASFilter],
+        fieldName: String
+    ): HtmlElement = {
+      if (Util.isIntType(minVal.getClass())) {
+        p(
+          className := "minMaxItem",
+          renderValueInput(
+            minVal,
+            newValue => {
+              myContextBuilder(
+                this.copy(min =
+                  min.withNewField(
+                    fieldName,
+                    convert(newValue, minVal.getClass())
+                  )
+                )
+              )
+            },
+            asFilterState
+          ),
+          div(s" <= $fieldName <= "),
+          renderValueInput(
+            maxVal,
+            newValue => {
+              myContextBuilder(
+                this.copy(max =
+                  max.withNewField(
+                    fieldName,
+                    convert(newValue, maxVal.getClass())
+                  )
+                )
+              )
+            },
+            asFilterState
+          )
+        )
+      } else {
+        minVal.getClass match {
+          case c if classOf[Attribute].isAssignableFrom(c) => {
+            p(
+              select(
+                (Attribute.NONE +: Attribute.fwwld).map(att => {
+                  option(
+                    value := att.name,
+                    att.name,
+                    if (att == minVal)
+                      Some(defaultSelected := true)
+                    else
+                      None
+                  )
+                }),
+                inContext { thisNode =>
+                  onChange
+                    .mapTo(thisNode.ref.value)
+                    .map(newValue => {
+                      myContextBuilder(
+                        this.copy(
+                          min = min.withNewField(
+                            fieldName,
+                            convert(newValue, minVal.getClass)
+                          ),
+                          max = max.withNewField(
+                            fieldName,
+                            convert(newValue, maxVal.getClass)
+                          )
+                        )
+                      )
+                    }) --> asFilterState
+                }
+              )
+            )
+          }
+          case c => {
+            println(s"Case not matched! $c ::: ${classOf[Attribute]}")
+            ???
+          }
+        }
+      }
     }
 
     override def render(
@@ -157,50 +261,12 @@ object SkillSelector {
           names
             .zip(vals)
             .map((fieldName, fieldValTup) => {
-              val minVal = fieldValTup._1
-              val maxVal = fieldValTup._2
-              val inputType = if (isIntType(minVal.getClass())) "number" else ""
-              p(
-                className := "minMaxItem",
-                input(
-                  typ := inputType,
-                  value := minVal.toString,
-                  inContext { thisNode =>
-                    onBlur
-                      .mapTo(thisNode.ref.value)
-                      .map(newValue => {
-                        myContextBuilder(
-                          this.copy(min =
-                            min.withNewField(
-                              fieldName,
-                              convert(newValue, minVal.getClass())
-                            )
-                          )
-                        )
-                      }) --> asFilterState
-                  },
-                  className := s"minMax minMax$inputType"
-                ),
-                div(s" <= $fieldName <= "),
-                input(
-                  typ := inputType,
-                  value := maxVal.toString,
-                  inContext { thisNode =>
-                    onBlur
-                      .mapTo(thisNode.ref.value)
-                      .map(newValue => {
-                        myContextBuilder(
-                          this.copy(max =
-                            max.withNewField(
-                              fieldName,
-                              convert(newValue, maxVal.getClass())
-                            )
-                          )
-                        )
-                      }) --> asFilterState
-                  },
-                  className := s"minMax minMax$inputType"
-                )
+              renderMinMax(
+                fieldValTup._1,
+                fieldValTup._2,
+                myContextBuilder,
+                asFilterState,
+                fieldName
               )
             })
         )

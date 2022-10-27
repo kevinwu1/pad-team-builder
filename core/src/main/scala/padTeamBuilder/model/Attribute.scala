@@ -33,4 +33,6 @@ object Attribute {
     else
       Attribute.fromOrdinal(value)
   }
+
+  def fwwld = List(FIRE, WATER, WOOD, LIGHT, DARK)
 }

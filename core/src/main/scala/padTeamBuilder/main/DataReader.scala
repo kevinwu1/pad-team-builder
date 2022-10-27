@@ -19,8 +19,8 @@ import scala.util.Random
 object DataReader {
 
   def main(arg: Array[String]): Unit = {
-    // createParsedPickledCards()
-    createParsedCards()
+
+    // createParsedCards()
   }
 
   // inline def getSomeVals[T <: SkillEffect](using

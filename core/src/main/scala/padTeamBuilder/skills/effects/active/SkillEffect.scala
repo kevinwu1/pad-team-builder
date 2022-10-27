@@ -3,6 +3,7 @@ package padTeamBuilder.skills.effects.active
 import padTeamBuilder.model.Board.BoardPositionExtensions.countPositions
 import padTeamBuilder.model.Board.BoardPositions
 import padTeamBuilder.model._
+import padTeamBuilder.util.Util
 import padTeamBuilder.skills.ActiveSkill
 // sealed trait SkillEffectJson[T]() {
 //   def toJson: JsSuccess = {}
@@ -92,32 +93,44 @@ object SkillEffect {
           }
           val thisFields = getFieldsMap(thisEffect, commonFields)
           val thatFields = getFieldsMap(thatEffect, commonFields)
-          def containsAllLeq(
-              m1: Map[String, Any],
-              m2: Map[String, Any]
-          ): Boolean =
-            m1.forall((k, v) =>
-              m2
-                .get(k)
-                .map(thatVal => SkillEffect.leq(v, thatVal))
-                .getOrElse(false)
-            )
-          containsAllLeq(thisFields, thatFields)
+          thisFields.forall((k, v) =>
+            thatFields
+              .get(k)
+              .map(thatVal => SkillEffect.leq(v, thatVal))
+              .getOrElse(false)
+          )
         }
       }
   }
 
   def leq(e1: Any, e2: Any): Boolean = {
-    if (e1.getClass() != e2.getClass())
-      false
-    else
-      e1 match {
-        case _: Int    => e1.asInstanceOf[Int] <= e2.asInstanceOf[Int]
-        case _: Double => e1.asInstanceOf[Double] <= e2.asInstanceOf[Double]
-        case _: List[_] =>
-          e1.asInstanceOf[List[_]].diff(e2.asInstanceOf[List[_]]).isEmpty
-        case _ => e1 == e2
-      }
+    if (Util.isIntType(e1.getClass))
+      e1.asInstanceOf[Int] <= e2.asInstanceOf[Int]
+    else {
+      if (e1.getClass() != e2.getClass()) {
+        println(
+          s"CLASSES DONT MATCH???  for $e1 and $e2 of types ${e1
+              .getClass()} and ${e2.getClass()}, returning false"
+        )
+        false
+      } else
+        e1 match {
+          case _: Double => e1.asInstanceOf[Double] <= e2.asInstanceOf[Double]
+          case _: List[_] =>
+            e1.asInstanceOf[List[_]].diff(e2.asInstanceOf[List[_]]).isEmpty
+          case _: Attribute =>
+            e1.asInstanceOf[Attribute] == e2.asInstanceOf[Attribute]
+            || e1.asInstanceOf[Attribute] == Attribute.NONE
+            || e2.asInstanceOf[Attribute] == Attribute.NONE
+          case _ => {
+            println(
+              s"Got unknown types for $e1 and $e2 of types ${e1
+                  .getClass()} and ${e2.getClass()}, using basic equality"
+            )
+            e1 == e2
+          }
+        }
+    }
   }
 }
 
