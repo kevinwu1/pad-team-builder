@@ -223,6 +223,7 @@ object JsonParsing {
     Json.format[LSComponentInfinite]
   implicit val formatMultiLSEffect: Format[MultiLSEffect] =
     Json.format[MultiLSEffect]
+
   implicit val formatLSEffectNone: Format[LSEffectNone] =
     Json.format[LSEffectNone]
   implicit val formatDynamicSelectEffect: Format[DynamicSelectEffect] =

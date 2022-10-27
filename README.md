@@ -22,7 +22,6 @@ vscode plugins:
 scala syntax
 scala metals
     import build after install
-scala sbt
 live server
 
 vscode setup:

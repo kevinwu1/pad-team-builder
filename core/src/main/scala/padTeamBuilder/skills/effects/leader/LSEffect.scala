@@ -42,7 +42,7 @@ case class MultiLSEffect(effects: List[LSEffect])
 case class LSEffectNone() extends LSEffect("")
 
 def firstOf(effects: List[LSEffect]): LSEffect = {
-  val effectsFiltered = effects.filter(_ != LSEffectNone)
+  val effectsFiltered = effects.filter(_ != LSEffectNone())
   if (effectsFiltered.size == 0)
     LSEffectNone()
   else if (effectsFiltered.size == 1)

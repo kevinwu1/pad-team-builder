@@ -19,6 +19,7 @@ import scala.util.Random
 object DataReader {
 
   def main(arg: Array[String]): Unit = {
+    // createParsedPickledCards()
     createParsedCards()
   }
 
@@ -46,6 +47,41 @@ object DataReader {
     println("carddata length: " + cardData.size)
     testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
+  }
+  def createParsedPickledCards() = {
+    println(s"Current dir: ${System.getProperty("user.dir")}")
+    val cardDataFile = "download_card_data.json"
+    val skillDataFile = "download_skill_data.json"
+    val cardData = readCardData(cardDataFile)
+    val skillData = readSkillData(skillDataFile)
+    println(skillData.length)
+    println("carddata length: " + cardData.size)
+    testLSParsing3(cardData, skillData)
+    val cards = parseAllCardsFromJsonCardData(cardData, skillData)
+
+    val (normalCards, altCards) = cards.partition(_.id < 20000)
+    val desiredCards =
+      normalCards.reverse.filter(_.name != "*****").filter(_.name != "????")
+    val splits = 9
+    val step = 1000
+    (0 to 20).reverse
+      .map(i =>
+        (
+          i,
+          desiredCards.filter(c => i * step <= c.id && c.id < (i + 1) * step)
+        )
+      )
+      .filter(_._2.nonEmpty)
+      .foreach(t => {
+        val ind = t._1
+        val cards = t._2
+        val path = s"parsed_cards_${ind}.pickle"
+        writeAllCardsPickle(cards, path)
+      })
+  }
+  def writeAllCardsPickle(cards: Vector[Card], path: String) = {
+    println(s"wrting ${cards.size} cards")
+    new PrintStream(path).print(Pickle.cardsToPickle(cards))
   }
 
   def createParsedCards() = {

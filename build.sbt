@@ -18,7 +18,8 @@ lazy val core = project
     name := "pad team builder",
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit" % "0.7.29" % Test,
-      "com.typesafe.play" %% "play-json" % "2.10.0-RC7"
+      "com.typesafe.play" %% "play-json" % "2.10.0-RC7",
+      "com.lihaoyi" %% "upickle" % "2.0.0"
     )
   )
 
@@ -36,12 +37,15 @@ lazy val corejs = project
       "Ymacro-debug-lite",
       "-deprecation"
     ),
+    javaOptions += "-Xss1048576",
+    javaOptions += "-Xmx8G",
     name := "pad team builder",
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
       // scala-js dependency needs triple percent
       "org.scalameta" %%% "munit" % "0.7.29" % Test,
-      "com.typesafe.play" %%% "play-json" % "2.10.0-RC7"
+      "com.typesafe.play" %%% "play-json" % "2.10.0-RC7",
+      "com.lihaoyi" %%% "upickle" % "2.0.0"
     )
   )
 
