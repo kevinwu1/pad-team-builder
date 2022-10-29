@@ -34,9 +34,6 @@ switch to using sbt instead of bloop
 3 select sbt
 
 
-general setup:
-download card data and skill data im not committing those massive jsons
-
 npm init private 
 npm install jsdom
 
