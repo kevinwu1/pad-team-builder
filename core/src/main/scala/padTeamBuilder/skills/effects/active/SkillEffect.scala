@@ -4,15 +4,16 @@ import padTeamBuilder.model.Board.BoardPositionExtensions.countPositions
 import padTeamBuilder.model.Board.BoardPositions
 import padTeamBuilder.model._
 import padTeamBuilder.util.Util
+import padTeamBuilder.util.SkillEffectFieldType
 import padTeamBuilder.skills.ActiveSkill
-// sealed trait SkillEffectJson[T]() {
-//   def toJson: JsSuccess = {}
-// }
 
+import scala.compiletime._
+import scala.deriving.*
 //is this a monoid?
 trait SkillEffectGeneric extends Product {
   def <=(that: SkillEffectGeneric): Boolean = SkillEffect.leq(this, that)
   def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric
+  def getFieldTypes: List[SkillEffectFieldType]
 }
 
 sealed trait SkillEffect(str: String) extends SkillEffectGeneric {
@@ -135,10 +136,14 @@ object SkillEffect {
 }
 
 case class NoEffect() extends SkillEffect("") {
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[NoEffect]
   override def withNewField(
       fieldName: String,
       newValue: Any
   ): SkillEffectGeneric = ???
+
 }
 
 case class MultiEffect(effects: List[SkillEffect])
@@ -146,7 +151,14 @@ case class MultiEffect(effects: List[SkillEffect])
       effects.mkString("\n")
       // effects.zipWithIndex.map((e, i) => s"${i + 1}. $e").mkString("\n")
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[MultiEffect]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 case class EvolvingEffect(loop: Boolean, skills: List[ActiveSkill])
@@ -157,7 +169,13 @@ case class EvolvingEffect(loop: Boolean, skills: List[ActiveSkill])
           .map((skill, i) => s"Stage ${i + 1} (cd ${skill.cdStr}): \n${skill.skillEffect}")
           .mkString("\n")}"
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[EvolvingEffect]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "loop" => this.copy(loop = newValue.asInstanceOf[Boolean])
     }
@@ -169,11 +187,24 @@ case class ConditionalEffect(
 ) extends SkillEffect(
       s"$condition[\n$effect\n]"
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ConditionalEffect]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 sealed trait ConditionalComponent extends SkillEffectGeneric {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] = ???
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 case class ConditionalComponentHP(hpReq: Int, needsToBeMore: Boolean)
@@ -195,7 +226,13 @@ case class ConditionalComponentFloor(floorReq: Int, needsToBeAfter: Boolean)
 case class ChangeTheWorld(
     seconds: Int
 ) extends SkillEffect(s"Move orbs freely for ${seconds} seconds. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ChangeTheWorld]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "seconds" => this.copy(seconds = newValue.asInstanceOf[Int])
     }
@@ -206,7 +243,13 @@ case class CounterAttackSkill(
     att: Attribute,
     turns: Int
 ) extends SkillEffect(s"${multiplier}x $att counterattack for $turns turns. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[CounterAttackSkill]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Int])
       case "att"        => this.copy(att = newValue.asInstanceOf[Attribute])
@@ -216,12 +259,16 @@ case class CounterAttackSkill(
 
 case class Suicide(percentLost: Double)
     extends SkillEffect(s"HP reduced by ${percentLost}%. ") {
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[Suicide]
   override def withNewField(
       fieldName: String,
       newValue: Any
   ): SkillEffectGeneric =
     fieldName match {
-      case "percentLost" => this.copy(percentLost = newValue.asInstanceOf[Int])
+      case "percentLost" =>
+        this.copy(percentLost = newValue.asInstanceOf[Double])
     }
 }
 
@@ -231,7 +278,13 @@ case class DefenseBreak(
 ) extends SkillEffect(
       s"Reduce enemy defense by ${percent}% for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[DefenseBreak]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
       case "turns"   => this.copy(turns = newValue.asInstanceOf[Int])
@@ -241,7 +294,13 @@ case class DefenseBreak(
 case class Delay(
     turns: Int
 ) extends SkillEffect(s"Delays enemies for ${turns} turns. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[Delay]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -250,7 +309,13 @@ case class Delay(
 case class EnhanceOrbs(
     attribute: Attribute
 ) extends SkillEffect(s"Enhances $attribute orbs. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[EnhanceOrbs]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "attribute" =>
         this.copy(attribute = newValue.asInstanceOf[Attribute])
@@ -267,7 +332,13 @@ case class GravityFalse(
     with SkillEffect(
       s"Reduce all enemies' current HP by ${percent}% of their current HP. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[GravityFalse]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
     }
@@ -278,7 +349,13 @@ case class GravityTrue(percent: Int)
     with SkillEffect(
       s"Reduce all enemies' current HP by $percent% of their max HP. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[GravityTrue]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
     }
@@ -290,7 +367,13 @@ case class HealFlat(
     amount: Int
 ) extends Heal
     with SkillEffect(s"Heal ${amount} HP. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HealFlat]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "amount" => this.copy(amount = newValue.asInstanceOf[Int])
     }
@@ -300,7 +383,13 @@ case class HealMultiplier(
     multiplier: Int
 ) extends Heal
     with SkillEffect(s"Heal ${multiplier}x this card's RCV. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HealMultiplier]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Int])
     }
@@ -310,7 +399,13 @@ case class HealPercentMax(
     percent: Int
 ) extends Heal
     with SkillEffect(s"Heal ${percent}% max HP. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HealPercentMax]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
     }
@@ -321,7 +416,13 @@ case class HealScalingByAwakening(percent: Int, awks: List[Awakening])
     with SkillEffect(
       s"Heal $percent% RCV as HP for each ${awks.mkString(", ")} awakening on the team. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HealScalingByAwakening]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
       case "awks"    => this.copy(awks = newValue.asInstanceOf[List[Awakening]])
@@ -333,7 +434,13 @@ case class HealByTeamRCV(multiplier: Int)
     with SkillEffect(
       s"Heal ${multiplier}x of entire team's RCV. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HealByTeamRCV]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Int])
     }
@@ -344,7 +451,13 @@ case class HealPerTurn(percent: Int, turns: Int)
     with SkillEffect(
       s"Heal $percent% max HP every turn for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HealPerTurn]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
       case "turns"   => this.copy(turns = newValue.asInstanceOf[Int])
@@ -358,7 +471,13 @@ case class IncreaseSkyfall(
 ) extends SkillEffect(
       s"$percent% increased skyfall for ${colors.mkString(", ")} for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[IncreaseSkyfall]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "colors" =>
         this.copy(colors = newValue.asInstanceOf[List[Attribute]])
@@ -370,7 +489,13 @@ case class IncreaseSkyfall(
 case class MassAttack(
     turns: Int
 ) extends SkillEffect(s"Mass attacks for $turns turns. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[MassAttack]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -386,7 +511,13 @@ case class OrbChangeAtoB(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes $from orbs to $to orbs. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangeAtoB]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "from" => this.copy(from = newValue.asInstanceOf[Attribute])
       case "to"   => this.copy(to = newValue.asInstanceOf[Attribute])
@@ -403,7 +534,13 @@ case class OrbChangeFullBoard(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes all orbs to ${atts.mkString(", ")}. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangeFullBoard]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "atts" => this.copy(atts = newValue.asInstanceOf[List[Attribute]])
     }
@@ -415,7 +552,13 @@ case class OrbChangeColumn(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes the $column column into $to. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangeColumn]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "column" => this.copy(column = newValue.asInstanceOf[Column])
       case "to"     => this.copy(to = newValue.asInstanceOf[Attribute])
@@ -435,7 +578,13 @@ case class OrbChangeColumnRandom(
     with SkillEffect(
       s"Changes the $column column into a random mix of ${atts.mkString(", ")}. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangeColumnRandom]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "column" => this.copy(column = newValue.asInstanceOf[Column])
       case "atts"   => this.copy(atts = newValue.asInstanceOf[List[Attribute]])
@@ -448,7 +597,13 @@ case class OrbChangeRow(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes the $row row into $to. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangeRow]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "row"  => this.copy(row = newValue.asInstanceOf[Row])
       case "to"   => this.copy(to = newValue.asInstanceOf[Attribute])
@@ -469,7 +624,13 @@ case class OrbChangeRandomSpawn(
     with SkillEffect(s"Randomly spawn ${atts
         .map(att => s"$numOrbs $att")
         .mkString(", ")} orbs from non [${exclAtts.mkString(", ")}] orbs. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangeRow]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "numOrbs" => this.copy(numOrbs = newValue.asInstanceOf[Int])
       case "atts"    => this.copy(atts = newValue.asInstanceOf[List[Attribute]])
@@ -486,7 +647,13 @@ case class OrbChangePattern(
     with SkillEffect(
       s"Changes the following orbs to $to orbs: \n${Board.boardPositionsToCompleteStr(positions)}"
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangePattern]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "positions" =>
         this.copy(positions = newValue.asInstanceOf[BoardPositions])
@@ -507,7 +674,13 @@ case class OrbChangeMultiTarget(
     with SkillEffect(
       s"Changes ${sourceAtts.mkString(", ")} into a random mix of ${atts.mkString(", ")}"
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbChangeMultiTarget]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "sourceAtts" =>
         this.copy(sourceAtts = newValue.asInstanceOf[List[Attribute]])
@@ -518,14 +691,27 @@ case class OrbChangeMultiTarget(
 case class Poison(
     multiplier: Int
 ) extends SkillEffect(s"Poisons enemies with ${multiplier}x ATK. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[Poison]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Int])
     }
 }
 
 case class Refresh() extends SkillEffect(s"Replaces all orbs. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[Refresh]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 sealed trait RCVBoostSkill extends SkillEffectGeneric {
@@ -536,7 +722,13 @@ case class RCVBoostMult(multiplier: Double, turns: Int)
     with SkillEffect(
       s"${multiplier}x RCV for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[RCVBoostMult]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Double])
       case "turns"      => this.copy(turns = newValue.asInstanceOf[Int])
@@ -551,7 +743,13 @@ case class RCVBoostByAwakening(
     with SkillEffect(
       s"1+(${rcvScaling}x) RCV for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[RCVBoostByAwakening]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "rcvScaling" => this.copy(rcvScaling = newValue.asInstanceOf[Double])
       case "awks"  => this.copy(awks = newValue.asInstanceOf[List[Awakening]])
@@ -568,7 +766,13 @@ case class RCVBoostByAttributeAndType(
     with SkillEffect(
       s"1+(${rcvScaling}x) RCV for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[RCVBoostByAttributeAndType]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "rcvScaling" => this.copy(rcvScaling = newValue.asInstanceOf[Double])
       case "atts"  => this.copy(atts = newValue.asInstanceOf[List[Attribute]])
@@ -588,7 +792,13 @@ case class ShieldAll(
     with SkillEffect(
       s"Reduces damage taken by ${percent}% for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ShieldAll]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
       case "turns"   => this.copy(turns = newValue.asInstanceOf[Int])
@@ -603,7 +813,13 @@ case class ShieldAttribute(
     with SkillEffect(
       s"For $turns turns, ${percent}% reduced $attribute damage taken"
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ShieldAttribute]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
       case "attribute" =>
@@ -619,7 +835,13 @@ case class ShieldScalingByAwakening(
 ) extends SkillEffect(
       s"${reductionScaling}% damage reduction for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ShieldScalingByAwakening]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "reductionScaling" =>
         this.copy(reductionScaling = newValue.asInstanceOf[Double])
@@ -640,7 +862,13 @@ case class SpikeAttribute(
     with SkillEffect(
       s"${multiplier}x ATK for $att for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SpikeAttribute]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Double])
       case "att"        => this.copy(att = newValue.asInstanceOf[Attribute])
@@ -655,7 +883,13 @@ case class SpikeType(
 ) extends SkillEffect(
       s"${multiplier}x ATK for $cardType type for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SpikeType]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Double])
       case "cardType"   => this.copy(cardType = newValue.asInstanceOf[CardType])
@@ -675,7 +909,13 @@ case class SpikeScalingByAwakening(
     with SkillEffect(
       s"1+(${dmgScaling}x) ATK for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SpikeScalingByAwakening]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "dmgScaling" => this.copy(dmgScaling = newValue.asInstanceOf[Double])
       case "awks"  => this.copy(awks = newValue.asInstanceOf[List[Awakening]])
@@ -692,7 +932,13 @@ case class SpikeScalingByAttributeAndType(
     with SkillEffect(
       s"1+(${dmgScaling}x) ATK for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SpikeScalingByAttributeAndType]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "dmgScaling" => this.copy(dmgScaling = newValue.asInstanceOf[Double])
       case "atts"  => this.copy(atts = newValue.asInstanceOf[List[Attribute]])
@@ -705,7 +951,13 @@ case class SpikeSlots(multiplier: Double, slots: List[CardSlot], turns: Int)
     extends SkillEffect(
       s"${multiplier}x ATK for ${slots.mkString(", ")} for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SpikeSlots]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Double])
       case "slots" => this.copy(slots = newValue.asInstanceOf[List[CardSlot]])
@@ -718,6 +970,8 @@ class Transform extends SkillEffectGeneric {
     that.getClass() == classOf[Transform]
   override def productArity: Int = 0
   override def productElement(n: Int): Any = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] = List()
   override def withNewField(
       fieldName: String,
       newValue: Any
@@ -744,7 +998,14 @@ case class LeadSwapThisCard()
     with SkillEffect(
       s"Switches places with leader. Switch back when used again. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[LeadSwapThisCard]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 case class LeadSwapRightMost()
@@ -752,12 +1013,25 @@ case class LeadSwapRightMost()
     with SkillEffect(
       "Switches leader and rightmost sub. Switch back when used again."
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[LeadSwapRightMost]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 case class AwokenBindClear(turns: Int)
     extends SkillEffect(s"Awoken bind reduced for $turns turns. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[AwokenBindClear]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -765,7 +1039,13 @@ case class AwokenBindClear(turns: Int)
 
 case class BindClear(turns: Int)
     extends SkillEffect(s"Bind reduced for $turns turns. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[BindClear]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -777,7 +1057,14 @@ case class Random(effects: List[ActiveSkill])
         effects.zipWithIndex.map((s, i) => s"${i + 1}. $s").mkString("\n")
       s"Randomly activates one of the following: \n$skills"
     }) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[Random]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 trait TimeExtendSkill extends SkillEffectGeneric {
@@ -789,7 +1076,13 @@ case class TimeExtendFlat(seconds: Int, turns: Int)
     with SkillEffect(
       s"${if (seconds > 0) "Extends" else "Reduces"} move time by $seconds seconds for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[TimeExtendFlat]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "seconds" => this.copy(seconds = newValue.asInstanceOf[Int])
       case "turns"   => this.copy(turns = newValue.asInstanceOf[Int])
@@ -801,7 +1094,13 @@ case class TimeExtendMult(mult: Double, turns: Int)
     with SkillEffect(
       s"${mult}x move time for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[TimeExtendMult]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "mult"  => this.copy(mult = newValue.asInstanceOf[Int])
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
@@ -810,7 +1109,13 @@ case class TimeExtendMult(mult: Double, turns: Int)
 
 case class AttributeChangeSelf(turns: Int, att: Attribute)
     extends SkillEffect(s"Changes own attribute to $att for $turns turns. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[AttributeChangeSelf]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
       case "att"   => this.copy(att = newValue.asInstanceOf[Attribute])
@@ -827,6 +1132,9 @@ class Haste(t: Int) extends SkillEffectGeneric {
 
   override def productArity: Int = 1
 
+  override def getFieldTypes: List[SkillEffectFieldType] = List(
+    SkillEffectFieldType.INT
+  )
   override def withNewField(
       fieldName: String,
       newValue: Any
@@ -840,6 +1148,9 @@ class Haste(t: Int) extends SkillEffectGeneric {
 case class HasteFixed(override val turns: Int)
     extends Haste(turns)
     with SkillEffect(s"Team skills charged by $turns turns. ") {
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HasteFixed]
   override def withNewField(
       fieldName: String,
       newValue: Any
@@ -854,6 +1165,9 @@ case class HasteRandom(override val turns: Int, turnsMax: Int)
     with SkillEffect(
       s"Team skills charged by $turns-$turnsMax turns at random. "
     ) {
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[HasteRandom]
   override def withNewField(
       fieldName: String,
       newValue: Any
@@ -868,7 +1182,13 @@ case class LockOrbs(colors: List[Attribute], numOrbs: Int)
     extends SkillEffect(
       s"Locks ${if (numOrbs < 42) s"$numOrbs " else ""}${colors.mkString(", ")} orbs. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[LockOrbs]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "colors" =>
         this.copy(colors = newValue.asInstanceOf[List[Attribute]])
@@ -885,7 +1205,13 @@ case class ChangeEnemyAttributePermanent(att: Attribute)
     with SkillEffect(
       s"Changes all enemies' attribute to $att. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ChangeEnemyAttributePermanent]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "att" => this.copy(att = newValue.asInstanceOf[Attribute])
     }
@@ -896,7 +1222,13 @@ case class ChangeEnemyAttributeTemporary(att: Attribute, turns: Int)
     with SkillEffect(
       s"Changes all enemies' attribute to $att for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ChangeEnemyAttributeTemporary]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "att"   => this.copy(att = newValue.asInstanceOf[Attribute])
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
@@ -907,7 +1239,13 @@ case class AddCombosSkill(combos: Int, turns: Int)
     extends SkillEffect(
       s"Adds $combos combo${if (combos == 1) "" else "s"} for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[AddCombosSkill]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "combos" => this.copy(combos = newValue.asInstanceOf[Int])
       case "turns"  => this.copy(turns = newValue.asInstanceOf[Int])
@@ -920,7 +1258,13 @@ case class VoidDamageAbsorb(turns: Int)
     extends SkillEffect(
       s"Voids damage absorption for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[VoidDamageAbsorb]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -930,7 +1274,13 @@ case class VoidAttributeAbsorb(turns: Int)
     extends SkillEffect(
       s"Voids attribute absorption for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[VoidAttributeAbsorb]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -940,7 +1290,13 @@ case class VoidVoid(turns: Int)
     extends SkillEffect(
       s"Voids damage void for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[VoidVoid]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -950,7 +1306,13 @@ case class EnhancedSkyfall(percent: Int, turns: Int)
     extends SkillEffect(
       s"$percent% chance for enhanced skyfall orbs for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[EnhancedSkyfall]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "percent" => this.copy(percent = newValue.asInstanceOf[Int])
       case "turns"   => this.copy(turns = newValue.asInstanceOf[Int])
@@ -961,14 +1323,27 @@ case class OrbTrace()
     extends SkillEffect(
       "Unlocks all orbs. \nChanges all orbs to Fire, Water, Wood and Light. \nTraces a 3-combo path on Normal dungeons with 3-linked matches."
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[OrbTrace]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 case class AllyDelay(turns: Int)
     extends SkillEffect(
       s"Delays team's skills for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[AllyDelay]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -978,7 +1353,13 @@ case class AllyDelayRange(minTurns: Int, maxTurns: Int)
     extends SkillEffect(
       s"Delays team's skills for $minTurns-$maxTurns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[AllyDelayRange]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "minTurns" => this.copy(minTurns = newValue.asInstanceOf[Int])
       case "maxTurns" => this.copy(maxTurns = newValue.asInstanceOf[Int])
@@ -986,14 +1367,27 @@ case class AllyDelayRange(minTurns: Int, maxTurns: Int)
 }
 
 case class UnlockOrbs() extends SkillEffect("Unlock all orbs. ") {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[UnlockOrbs]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    ???
 }
 
 case class UnmatchableClear(turns: Int)
     extends SkillEffect(
       s"Unmatchable reduced status by $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[UnmatchableClear]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -1003,7 +1397,13 @@ case class NoSkyfallSkill(turns: Int)
     extends SkillEffect(
       s"No skyfall combos for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[NoSkyfallSkill]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -1020,7 +1420,13 @@ case class SpinnerRandom(numSpinners: Int, speed: Double, turns: Int)
     with SkillEffect(
       s"Spawn $numSpinners spinners at random at $speed for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SpinnerRandom]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "numSpinners" => this.copy(numSpinners = newValue.asInstanceOf[Int])
       case "speed"       => this.copy(speed = newValue.asInstanceOf[Double])
@@ -1038,7 +1444,13 @@ case class SpinnerFixed(
       s"Spawn spinners in the following positions: \n${Board
           .boardPositionsToCompleteStr(positions)} \nat $speed speed for $turns turns."
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SpinnerFixed]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "positions" =>
         this.copy(positions = newValue.asInstanceOf[BoardPositions])
@@ -1058,7 +1470,13 @@ case class LockedSkyfall(atts: List[Attribute], turns: Int)
     extends SkillEffect(
       s"${atts.mkString(", ")} skyfall locked for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[LockedSkyfall]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "atts"  => this.copy(atts = newValue.asInstanceOf[List[Attribute]])
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
@@ -1069,7 +1487,13 @@ case class UnableToUseSkills(turns: Int)
     extends SkillEffect(
       s"Unable to use skills for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[UnableToUseSkills]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
@@ -1079,7 +1503,13 @@ case class SelfUnmatchable(atts: List[Attribute], turns: Int)
     extends SkillEffect(
       s"${atts.mkString(", ")} orbs are unmatchable for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[SelfUnmatchable]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "atts"  => this.copy(atts = newValue.asInstanceOf[List[Attribute]])
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
@@ -1090,7 +1520,13 @@ case class NailOrbSkyfall(skyfallChance: Int, turns: Int)
     extends SkillEffect(
       s"$skyfallChance% nail orb skyfall for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[NailOrbSkyfall]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "skyfallChance" =>
         this.copy(skyfallChance = newValue.asInstanceOf[Int])
@@ -1102,7 +1538,13 @@ case class MaxHPMult(multiplier: Double, turns: Int)
     extends SkillEffect(
       s"${multiplier}x max HP for $turns turns. "
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[MaxHPMult]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "multiplier" => this.copy(multiplier = newValue.asInstanceOf[Double])
       case "turns"      => this.copy(turns = newValue.asInstanceOf[Int])
@@ -1119,7 +1561,13 @@ case class ImmediateDamage(
         drain.map(p => s" and heal $p% of the damage").getOrElse("")
       s"Inflicts $amount $damageType on $target$drainText. "
     }) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[ImmediateDamage]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "amount"     => this.copy(amount = newValue.asInstanceOf[DAmount])
       case "damageType" => this.copy(damageType = newValue.asInstanceOf[DType])
@@ -1169,7 +1617,13 @@ case class TimeReducedForTop2(args: List[Int])
     extends SkillEffect(
       s"Orb move time halved for 1 turn for the top 2 ranked players"
     ) {
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric =
+
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[TimeReducedForTop2]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
     fieldName match {
       case "args" => this.copy(args = newValue.asInstanceOf[List[Int]])
     }

@@ -19,22 +19,8 @@ import scala.util.Random
 object DataReader {
 
   def main(arg: Array[String]): Unit = {
-
-    // createParsedCards()
+    println("3.5e4".toDouble)
   }
-
-  // inline def getSomeVals[T <: SkillEffect](using
-  //     x: Mirror.ProductOf[T]
-  // ): String = {
-  //   val s = helper[x.MirroredElemTypes]
-  //   s.mkString(",")
-  // }
-
-  // inline def helper[T <: Tuple]: List[Int] = inline erasedValue[T] match {
-  //   case _: EmptyTuple  => Nil
-  //   case _: (Int *: ts) => 0 :: helper[ts]
-  //   case _: (t *: ts)   => -1 :: helper[ts]
-  // }
 
   def test() = {
 

@@ -8,7 +8,7 @@ import org.scalajs.dom.raw.HTMLElement
 import padTeamBuilder.model._
 import padTeamBuilder.skills._
 import padTeamBuilder.skills.effects.active._
-import padTeamBuilder.util.Util
+import padTeamBuilder.util.{Util, SkillEffectFieldType}
 
 import scala.compiletime._
 import scala.deriving.*
@@ -57,7 +57,8 @@ object SkillSelector {
             CounterAttackSkill(0, Attribute.NONE, 0),
             CounterAttackSkill(9999, Attribute.NONE, 9999)
           )
-        )
+        ),
+        "Suicide" -> Some(ASMinMax(Suicide(0.0), Suicide(100.0)))
       )
       div(
         select(
@@ -135,17 +136,6 @@ object SkillSelector {
       (min <= t) && (t <= max)
     }
 
-    def convert(s: String, targetClass: Class[_]): Any = {
-      val sReal = if (s.isEmpty()) "999999" else s
-      if (Util.isIntType(targetClass))
-        sReal.toInt
-      else
-        targetClass match {
-          case c if classOf[Attribute].isAssignableFrom(c) =>
-            Attribute.valueOf(s)
-        }
-    }
-
     def renderValueInput(
         v: Any,
         newValueHandler: String => ASFilter,
@@ -166,10 +156,13 @@ object SkillSelector {
     def renderMinMax(
         minVal: Any,
         maxVal: Any,
+        seft: SkillEffectFieldType,
         myContextBuilder: ASFilter => ASFilter,
         asFilterState: Var[ASFilter],
         fieldName: String
     ): HtmlElement = {
+      println(s"minval : $minVal, ${minVal.getClass}")
+      val targetClass = minVal.getClass
       if (Util.isIntType(minVal.getClass())) {
         p(
           className := "minMaxItem",
@@ -180,7 +173,7 @@ object SkillSelector {
                 this.copy(min =
                   min.withNewField(
                     fieldName,
-                    convert(newValue, minVal.getClass())
+                    Util.convertAny(newValue, targetClass, seft)
                   )
                 )
               )
@@ -195,7 +188,7 @@ object SkillSelector {
                 this.copy(max =
                   max.withNewField(
                     fieldName,
-                    convert(newValue, maxVal.getClass())
+                    Util.convertAny(newValue, targetClass, seft)
                   )
                 )
               )
@@ -226,11 +219,11 @@ object SkillSelector {
                         this.copy(
                           min = min.withNewField(
                             fieldName,
-                            convert(newValue, minVal.getClass)
+                            Util.convertAny(newValue, targetClass, seft)
                           ),
                           max = max.withNewField(
                             fieldName,
-                            convert(newValue, maxVal.getClass)
+                            Util.convertAny(newValue, targetClass, seft)
                           )
                         )
                       )
@@ -253,22 +246,26 @@ object SkillSelector {
     ) = {
       val names = min.productElementNames.toList
       val vals = min.productIterator.zip(max.productIterator).toList
+      val sefts = min.getFieldTypes
       div(
         className := min.toString + ",,," + max.toString,
         div(min.getClass().getSimpleName()),
         div(
           className := "minMaxContainer",
           names
-            .zip(vals)
-            .map((fieldName, fieldValTup) => {
+            .lazyZip(vals)
+            .lazyZip(sefts)
+            .map((fieldName, fieldValTup, seft) => {
               renderMinMax(
                 fieldValTup._1,
                 fieldValTup._2,
+                seft,
                 myContextBuilder,
                 asFilterState,
                 fieldName
               )
             })
+            .toList
         )
       )
     }
