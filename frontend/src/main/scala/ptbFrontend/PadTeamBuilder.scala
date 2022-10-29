@@ -31,7 +31,7 @@ object PadTeamBuilder {
       .combineWith(cards.signal)
       .combineWith(asExpression.signal)
       .mapN((awaks, cards, asExpression) => {
-        if (asExpression == ASSelect(None, ""))
+        if (asExpression == ASSelect(None, "") && awaks.size == 0)
           Vector[(Card, List[Awakening])]()
         else {
           val r = cards
