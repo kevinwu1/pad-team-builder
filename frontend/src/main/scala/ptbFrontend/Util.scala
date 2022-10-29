@@ -1,11 +1,11 @@
 package ptbFrontend
 
+import com.raquo.airstream.web._
+import com.raquo.laminar.api.L._
 import org.scalajs.dom
 import org.scalajs.dom._
 import padTeamBuilder.json._
 import padTeamBuilder.model._
-import com.raquo.laminar.api.L._
-import com.raquo.airstream.web._
 
 object Util {
   def renderAwk(awk: Awakening): HtmlElement = {
@@ -96,31 +96,28 @@ object Util {
     )
   }
 
-  def loadCards(cards: Var[Vector[Card]]) = {
-    def getCards(url: String, cards: Var[Vector[Card]], cb: () => Unit) = {
-      val s = AjaxEventStream
-        .get(
-          url = url,
-          progressObserver =
-            Observer[(XMLHttpRequest, ProgressEvent)] { (evs, ev) =>
-              val perc = ev.loaded * 100.0 / ev.total
-            },
-          readyStateChangeObserver = Observer[XMLHttpRequest] { x =>
-            if (x.readyState == 4) {
-              cb()
-            }
-          }
-        )
-        .map(req => {
-          val p = JsonParsing.cardsFromJson(req.responseText)
-          p
-        })
-      s.addObserver(Observer[Vector[Card]] { newCards =>
-        cards.update(v => v ++ newCards)
-      })(unsafeWindowOwner)
-    }
-    (0 to 9).foldLeft(() => ())((cb, i) =>
-      () => getCards(s"parsed_cards_${i}.json", cards, cb)
-    )()
+  val CARD_PARTS = 9
+  val cards: Var[Vector[Card]] = Var(Vector[Card]())
+
+  def loadCards(): Signal[Vector[Card]] = {
+    val s = AjaxEventStream
+      .get(
+        url = "parsed_cards.json",
+        progressObserver =
+          Observer[(XMLHttpRequest, ProgressEvent)] { (evs, ev) =>
+            val perc = ev.loaded * 100.0 / ev.total
+          },
+      )
+      .map(req => {
+        println("parsing")
+        val p = JsonParsing.cardsFromJson(req.responseText)
+        println("parsed")
+        p
+      })
+    s.addObserver(Observer[Vector[Card]] { newCards =>
+      println("Got new Cards!")
+      cards.update(v => v ++ newCards)
+    })(unsafeWindowOwner)
+    cards.signal
   }
 }

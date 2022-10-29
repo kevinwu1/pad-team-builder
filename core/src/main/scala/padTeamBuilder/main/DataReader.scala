@@ -19,7 +19,7 @@ import scala.util.Random
 object DataReader {
 
   def main(arg: Array[String]): Unit = {
-    println("3.5e4".toDouble)
+    createParsedCards()
   }
 
   def test() = {
@@ -82,26 +82,13 @@ object DataReader {
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
 
     val (normalCards, altCards) = cards.partition(_.id < 20000)
-    val basepath = "parsed_cards.json"
+
     val desiredCards =
       normalCards.reverse.filter(_.name != "*****").filter(_.name != "????")
-    val splits = 9
-    val step = 1000
-    (0 to 20).reverse
-      .map(i =>
-        (
-          i,
-          desiredCards.filter(c => i * step <= c.id && c.id < (i + 1) * step)
-        )
-      )
-      .filter(_._2.nonEmpty)
-      .foreach(t => {
-        val ind = t._1
-        val cards = t._2
-        val path = s"parsed_cards_${ind}.json"
-        writeAllCards(cards, path)
-      })
+
+    writeAllCards(desiredCards, "parsed_cards.json")
   }
+
   def writeAllCards(cards: Vector[Card], path: String) = {
     new PrintStream(path).print(JsonParsing.cardsToJson(cards))
   }

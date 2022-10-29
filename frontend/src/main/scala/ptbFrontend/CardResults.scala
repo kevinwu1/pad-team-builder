@@ -2,15 +2,18 @@ package ptbFrontend
 
 import com.raquo.airstream.web._
 import com.raquo.laminar.api.L._
-import padTeamBuilder.model._
 import org.scalajs.dom
 import org.scalajs.dom._
+import padTeamBuilder.model._
+
+import scala.collection.mutable.PriorityQueue
 
 object CardResults {
 
   val RESULTS_MAX = 50
 
   type CardSearchResult = (Card, List[Awakening])
+  type RankedCardSearchResult = (CardSearchResult, Long)
   type CardRanker = CardSearchResult => Long
 
   val ID_CUTOFF = 20000
@@ -90,22 +93,17 @@ object CardResults {
   }
 
   def renderCardResults(
-      results: Signal[Vector[CardSearchResult]]
+      cardResults: Signal[Vector[RankedCardSearchResult]]
   ): HtmlElement = {
     div(
       renderSortOptions(resultsRanker, isDesc),
       div(
-        children <-- results
-          .combineWith(resultsRanker)
-          .combineWith(isDesc)
-          .mapN((v, ranker, isdesc) => {
-            val o = v.map(c => (c, ranker(c))).sortBy(_._2)
-            if (isdesc)
-              o.reverse
-            else o
+        children <-- cardResults
+          .map(c => {
+            println("slice!!!!!")
+            c.slice(0, RESULTS_MAX)
           })
-          .map(_.slice(0, RESULTS_MAX))
-          .map(v => v.map((csr, rank) => (csr._1, csr._2, rank)))
+          .map(v => v.map((csr, rank) => (csr._1, csr._2, rank)).toVector)
           .split(t => (t._1.id, t._2, t._3))((key, t, sig) => {
             val card = t._1
             val supers = t._2

@@ -11,14 +11,22 @@ import padTeamBuilder.skills.effects.active._
 import padTeamBuilder.skills.effects.leader._
 import play.api.libs.json._
 
-import CardResults.CardSearchResult
+import scala.collection.mutable.PriorityQueue
+import scala.util.Try
+
+import CardResults.{
+  CardSearchResult,
+  RankedCardSearchResult,
+  CardRanker,
+  isDesc,
+  resultsRanker,
+  RESULTS_MAX
+}
 import SkillSelector._
 
 object PadTeamBuilder {
 
-  val cards: Var[Vector[Card]] = Var(Vector[Card]())
-
-  Util.loadCards(cards)
+  val cards: Signal[Vector[Card]] = Util.loadCards()
 
   val selectedAwakenings: Var[List[Awakening]] = Var(List())
 
@@ -26,32 +34,85 @@ object PadTeamBuilder {
     ASSelect(None, "")
   })
 
-  val filteredCards: Signal[Vector[CardSearchResult]] =
-    selectedAwakenings.signal
-      .combineWith(cards.signal)
-      .combineWith(asExpression.signal)
-      .mapN((awaks, cards, asExpression) => {
-        if (asExpression == ASSelect(None, "") && awaks.size == 0)
-          Vector[(Card, List[Awakening])]()
-        else {
-          val r = cards
-            .map(card => {
-              val (hasRequiredAwakenings, supers) =
-                card.containsAwakenings(awaks, true)
-              (card, hasRequiredAwakenings, supers)
-            })
-            .filter(_._2)
-            .filter(t => asExpression.test(t._1.activeSkill.skillEffect))
-            .map(t => (t._1, t._3))
-          r
-        }
-      })
+  def resultFromComponents(
+      card: Card,
+      awaks: List[Awakening],
+      asExpression: ASFilter,
+      ranker: CardRanker
+  ): Option[RankedCardSearchResult] = {
+    val (hasRequiredAwakenings, supers) =
+      card.containsAwakenings(awaks, true)
+    if (
+      hasRequiredAwakenings && asExpression
+        .test(card.activeSkill.skillEffect)
+    ) {
+      val csr = (card, supers)
+      Some((csr, ranker(csr)))
+    } else None
+  }
+
+  def orderingFromRanker(ranker: CardRanker, isDesc: Boolean) =
+    new Ordering[RankedCardSearchResult]() {
+      override def compare(
+          x: RankedCardSearchResult,
+          y: RankedCardSearchResult
+      ): Int =
+        if (isDesc)
+          y._2.compareTo(x._2)
+        else
+          x._2.compareTo(y._2)
+    }
+  class Wrapper(p: PriorityQueue[RankedCardSearchResult]) {
+    def get = p
+    def update = new Wrapper(p)
+  }
+
+  val cardResults: Var[Vector[RankedCardSearchResult]] = Var(Vector())
+
+  cards.signal
+    .combineWith(selectedAwakenings.signal)
+    .combineWith(asExpression.signal)
+    .combineWith(resultsRanker.signal)
+    .combineWith(isDesc.signal)
+    .addObserver(Observer { nextValue =>
+      val cards = nextValue._1
+      val awaks = nextValue._2
+      val asExpression = nextValue._3
+      val ranker = nextValue._4
+      val isDesc = nextValue._5
+      println(s"Setting, desc: $isDesc")
+      val ordering = orderingFromRanker(ranker, isDesc)
+
+      val pq =
+        PriorityQueue()(orderingFromRanker(resultsRanker.now(), isDesc))
+
+      cards
+        .grouped(1000)
+        .foreach(cards => {
+          println("Group")
+          cards.foreach(card => {
+            resultFromComponents(card, awaks, asExpression, ranker).foreach(
+              result => {
+                pq.addOne(result)
+                if (pq.size > RESULTS_MAX) {
+                  pq.dequeue()
+                }
+              }
+            )
+          })
+          cardResults.update(w => {
+            pq.toVector.reverse
+          })
+        })
+    })(unsafeWindowOwner)
 
   def main(args: Array[String]): Unit = {
     val rootElement: HtmlElement = div(
       AwakeningSelector.renderAwakeningSelector(selectedAwakenings),
       SkillSelector.renderSkillSelector(asExpression),
-      CardResults.renderCardResults(filteredCards)
+      CardResults.renderCardResults(
+        cardResults.signal
+      )
     )
     val containerNode = dom.document.querySelector("#root")
     render(containerNode, rootElement)
