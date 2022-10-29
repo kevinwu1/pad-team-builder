@@ -86,24 +86,19 @@ object PadTeamBuilder {
       val pq =
         PriorityQueue()(orderingFromRanker(resultsRanker.now(), isDesc))
 
-      cards
-        .grouped(1000)
-        .foreach(cards => {
-          println("Group")
-          cards.foreach(card => {
-            resultFromComponents(card, awaks, asExpression, ranker).foreach(
-              result => {
-                pq.addOne(result)
-                if (pq.size > RESULTS_MAX) {
-                  pq.dequeue()
-                }
-              }
-            )
-          })
-          cardResults.update(w => {
-            pq.toVector.reverse
-          })
-        })
+      cards.foreach(card => {
+        resultFromComponents(card, awaks, asExpression, ranker).foreach(
+          result => {
+            pq.addOne(result)
+            if (pq.size > RESULTS_MAX) {
+              pq.dequeue()
+            }
+          }
+        )
+      })
+      cardResults.update(w => {
+        pq.dequeueAll.toVector.reverse
+      })
     })(unsafeWindowOwner)
 
   def main(args: Array[String]): Unit = {
