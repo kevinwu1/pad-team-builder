@@ -63,5 +63,71 @@ lazy val frontend = project
     ),
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv(),
     scalaJSUseMainModuleInitializer := true,
-    Compile / mainClass := Some("ptbFrontend.PadTeamBuilder")
+    Compile / mainClass := Some("ptbFrontend.PadTeamBuilder"),
+    customFast := {
+      val fastLink = (Compile / fastLinkJS).value
+      println(java.nio.file.Paths.get(".").toAbsolutePath)
+      val outputDir = "./static/"
+      java.nio.file.Files.createDirectories(java.nio.file.Paths.get(outputDir));
+      new java.io.File(
+        "frontend/target/scala-3.2.0/pad-team-builder-frontend-fastopt"
+      )
+        .listFiles()
+        .foreach(file => {
+          java.nio.file.Files
+            .copy(
+              file.toPath,
+              new java.io.File(outputDir, file.name).toPath,
+              java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            )
+        })
+      new java.io.File(
+        "frontend/src/main/resources/"
+      )
+        .listFiles()
+        .foreach(file => {
+          java.nio.file.Files
+            .copy(
+              file.toPath,
+              new java.io.File(outputDir, file.name).toPath,
+              java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            )
+        })
+    },
+    customFull := {
+      val fullLink = (Compile / fullLinkJS).value
+      println(java.nio.file.Paths.get(".").toAbsolutePath)
+      val outputDir = "./static/"
+      java.nio.file.Files
+        .createDirectories(java.nio.file.Paths.get(outputDir));
+      new java.io.File(
+        "frontend/target/scala-3.2.0/pad-team-builder-frontend-opt"
+      )
+        .listFiles()
+        .foreach(file => {
+          java.nio.file.Files
+            .copy(
+              file.toPath,
+              new java.io.File(outputDir, file.name).toPath,
+              java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            )
+        })
+      new java.io.File(
+        "frontend/src/main/resources/"
+      )
+        .listFiles()
+        .foreach(file => {
+          java.nio.file.Files
+            .copy(
+              file.toPath,
+              new java.io.File(outputDir, file.name).toPath,
+              java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            )
+        })
+    }
   )
+
+lazy val customFast = taskKey[Unit]("Fast link")
+lazy val customFull = taskKey[Unit]("Full link")
+
+Global / cancelable := true

@@ -35,3 +35,6 @@ metals.sbt
 node_modules
 
 target-json/
+
+#output dir
+static/
