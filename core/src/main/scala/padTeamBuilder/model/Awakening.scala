@@ -11,7 +11,7 @@ enum Awakening(str: String) extends Enum[Awakening] {
   case LightResist extends Awakening("LightResist")
   case DarkResist extends Awakening("DarkResist")
   case Autoheal extends Awakening("Autoheal")
-  case BindResist extends Awakening("BindResist")
+  case Unbindable extends Awakening("Unbindable")
   case BlindResist extends Awakening("BlindResist")
   case JammerResist extends Awakening("JammerResist")
   case PoisonResist extends Awakening("PoisonResist")
@@ -159,6 +159,27 @@ object Awakening {
       case HeartEnhancePlus =>
         getRcvMult(HeartEnhance) * getRcvMult(HeartEnhance)
       case _ => 1.0
+    }
+  }
+
+  def expandCompactAwakenings(a: Awakening): List[Awakening] = {
+    a match {
+      case UnbindablePlus   => List.fill(2)(Unbindable)
+      case TimeExtendPlus   => List.fill(2)(TimeExtend)
+      case SkillBoostPlus   => List.fill(2)(SkillBoost)
+      case BlindResistPlus  => List.fill(5)(BlindResist)
+      case JammerResistPlus => List.fill(5)(JammerResist)
+      case PoisonResistPlus => List.fill(5)(PoisonResist)
+      case TPAPlus          => List.fill(2)(TPA)
+      case RainbowHastePlus => List.fill(2)(RainbowHaste)
+      case AutohealPlus     => List.fill(2)(Autoheal)
+      case FireEnhancePlus  => List.fill(2)(FireEnhance)
+      case WaterEnhancePlus => List.fill(2)(WaterEnhance)
+      case WoodEnhancePlus  => List.fill(2)(WoodEnhance)
+      case LightEnhancePlus => List.fill(2)(LightEnhance)
+      case DarkEnhancePlus  => List.fill(2)(DarkEnhance)
+      case HeartEnhancePlus => List.fill(2)(HeartEnhance)
+      case _                => List(a)
     }
   }
 }

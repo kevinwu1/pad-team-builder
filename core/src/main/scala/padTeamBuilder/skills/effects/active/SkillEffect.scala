@@ -623,7 +623,10 @@ case class OrbChangeRandomSpawn(
 ) extends OrbChange
     with SkillEffect(s"Randomly spawn ${atts
         .map(att => s"$numOrbs $att")
-        .mkString(", ")} orbs from non [${exclAtts.mkString(", ")}] orbs. ") {
+        .mkString(", ")} orbs${
+        if (exclAtts.nonEmpty) s" from non [${exclAtts.mkString(", ")}] orbs"
+        else ""
+      }. ") {
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeRow]

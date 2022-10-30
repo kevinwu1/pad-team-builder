@@ -25,15 +25,20 @@ final case class Card(
       awks: Seq[Awakening],
       includeSupers: Boolean
   ): (Boolean, List[Awakening]) = {
-    val diff = awks.diff(awakenings)
-    if (!includeSupers) (diff.size == 0, List())
+    val myAwaks = awakenings.flatMap(Awakening.expandCompactAwakenings)
+    val queryAwakenings = awks.flatMap(Awakening.expandCompactAwakenings)
+    val remaining = queryAwakenings.diff(myAwaks)
+    if (!includeSupers) (remaining.size == 0, List())
     else {
-      if (diff.size == 0) {
+      if (remaining.isEmpty) {
         (true, superAwakenings)
-      } else if (diff.size == 1 && superAwakenings.contains(diff.head)) {
-        (true, diff.toList)
       } else {
-        (false, superAwakenings)
+        val validSuper = superAwakenings.find(superAwk => {
+          remaining.diff(Awakening.expandCompactAwakenings(superAwk)).isEmpty
+        })
+        validSuper
+          .map(vs => (true, List(vs)))
+          .getOrElse((false, List()))
       }
     }
   }
