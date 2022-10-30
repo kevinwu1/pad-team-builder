@@ -31,7 +31,7 @@ object PadTeamBuilder {
   val selectedAwakenings: Var[List[Awakening]] = Var(List())
 
   val asExpression: Var[ASFilter] = Var({
-    ASSelect(None, "")
+    ASAnd()
   })
 
   def resultFromComponents(

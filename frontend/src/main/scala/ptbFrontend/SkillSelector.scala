@@ -58,7 +58,8 @@ object SkillSelector {
             CounterAttackSkill(9999, Attribute.NONE, 9999)
           )
         ),
-        "Suicide" -> Some(ASMinMax(Suicide(0.0), Suicide(100.0)))
+        "Suicide" -> Some(ASMinMax(Suicide(0.0), Suicide(100.0))),
+        "NoSkyfall" -> Some(ASMinMax(NoSkyfallSkill(0), NoSkyfallSkill(100)))
       )
       div(
         select(
@@ -94,6 +95,8 @@ object SkillSelector {
     }
   }
 
+  def makeDefault = () => ASSelect(None, "")
+
   case class ASSingle[T <: SkillEffectGeneric](skillEffect: T)
       extends ASFilter {
     override def test(se: SkillEffect) = skillEffect <= se && se <= skillEffect
@@ -105,7 +108,8 @@ object SkillSelector {
     }
   }
 
-  case class ASAnd(exps: List[ASFilter]) extends ASFilter {
+  case class ASAnd(exps: List[ASFilter] = List(makeDefault()))
+      extends ASFilter {
     override def test(t: SkillEffect): Boolean = exps.forall(_.test(t))
     override def render(
         myContextBuilder: ASFilter => ASFilter,
@@ -125,7 +129,16 @@ object SkillSelector {
           )
         )
       )
-      r.tail.foldLeft(List(r.head))((l, i) => (l :+ p("and")) :+ i)
+      r.tail.foldLeft(List(r.head))((l, i) => (l :+ p("and")) :+ i) :+
+        button(
+          onClick.mapTo(
+            myContextBuilder(
+              ASAnd(exps :+ makeDefault())
+            )
+          ) --> asFilterState,
+          "+"
+        )
+
     })
   }
   case class ASMinMax[T <: SkillEffectGeneric](
@@ -249,7 +262,6 @@ object SkillSelector {
       val sefts = min.getFieldTypes
       div(
         className := min.toString + ",,," + max.toString,
-        div(min.getClass().getSimpleName()),
         div(
           className := "minMaxContainer",
           names
