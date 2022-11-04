@@ -8,7 +8,8 @@ import org.scalajs.dom.raw.HTMLElement
 import padTeamBuilder.model._
 import padTeamBuilder.skills._
 import padTeamBuilder.skills.effects.active._
-import padTeamBuilder.util.{Util, SkillEffectFieldType}
+import padTeamBuilder.util.SkillEffectFieldType
+import padTeamBuilder.util.Util
 
 import scala.compiletime._
 import scala.deriving.*
@@ -28,23 +29,13 @@ object SkillSelector {
     m(k)
   }
 
-  case class ASSelect(child: Option[ASFilter], selectedName: String)
-      extends ASFilter {
-    override def test(t: SkillEffect) = child.map(_.test(t)).getOrElse(true)
-    override def render(
-        contextBuilder: ASFilter => ASFilter,
-        asFilterState: Var[ASFilter]
-    ) = {
+  case class ASSelect(
+      child: Option[ASFilter],
+      selectedName: String,
       val options: Map[String, Option[ASFilter]] = Map(
         "" -> None,
-        "DefenseBreak" -> Some(
-          ASMinMax(
-            DefenseBreak(0, 1),
-            DefenseBreak(100, 10)
-          )
-        ),
         "Transform" -> Some(
-          ASSingle(Transform())
+          ASSingle(TransformGeneric())
         ),
         "EvolvingEffect" -> Some(
           ASSingle(EvolvingEffect(false, List()))
@@ -59,8 +50,37 @@ object SkillSelector {
           )
         ),
         "Suicide" -> Some(ASMinMax(Suicide(0.0), Suicide(100.0))),
+        "DefenseBreak" -> Some(
+          ASMinMax(
+            DefenseBreak(0, 1),
+            DefenseBreak(100, 10)
+          )
+        ),
+        "Delay" -> Some(ASMinMax(Delay(0), Delay(100))),
+        "EnhanceOrbs" -> Some(
+          ASMinMax(EnhanceOrbs(Attribute.NONE), EnhanceOrbs(Attribute.NONE))
+        ),
+        "Haste" -> Some(
+          ASSelect(
+            Some(ASMinMax(Haste(0), Haste(100))),
+            "Any",
+            Map(
+              "Any" -> Some(ASMinMax(Haste(0), Haste(100))),
+              "HasteFixed" -> Some(ASMinMax(HasteFixed(0), HasteFixed(100))),
+              "HasteRandom" -> Some(
+                ASMinMax(HasteRandom(0, 0), HasteRandom(100, 100))
+              )
+            )
+          )
+        ),
         "NoSkyfall" -> Some(ASMinMax(NoSkyfallSkill(0), NoSkyfallSkill(100)))
       )
+  ) extends ASFilter {
+    override def test(t: SkillEffect) = child.map(_.test(t)).getOrElse(true)
+    override def render(
+        contextBuilder: ASFilter => ASFilter,
+        asFilterState: Var[ASFilter]
+    ) = {
       div(
         select(
           options.keys.toVector.sorted
@@ -76,18 +96,20 @@ object SkillSelector {
               )
             })
             .toList,
-          onChange.mapToValue.map(v =>
+          onChange.mapToValue.map(v => {
+            println(s"Selected $v, ${options(v)}")
             contextBuilder(
               ASSelect(
                 options(v),
-                v
+                v,
+                options
               )
             )
-          ) --> asFilterState
+          }) --> asFilterState
         ),
         child.map(
           _.render(
-            x => contextBuilder(ASSelect(Option(x), selectedName)),
+            x => contextBuilder(ASSelect(Option(x), selectedName, options)),
             asFilterState
           )
         )
@@ -166,7 +188,7 @@ object SkillSelector {
       )
     }
 
-    def renderMinMax(
+    def renderMinMaxField(
         minVal: Any,
         maxVal: Any,
         seft: SkillEffectFieldType,
@@ -174,7 +196,7 @@ object SkillSelector {
         asFilterState: Var[ASFilter],
         fieldName: String
     ): HtmlElement = {
-      println(s"minval : $minVal, ${minVal.getClass}")
+      println(s"renderField $fieldName minval : $minVal, ${minVal.getClass}")
       val targetClass = minVal.getClass
       if (Util.isIntType(minVal.getClass())) {
         p(
@@ -217,7 +239,7 @@ object SkillSelector {
                 (Attribute.NONE +: Attribute.fwwld).map(att => {
                   option(
                     value := att.name,
-                    att.name,
+                    if (att == Attribute.NONE) "ANY" else att.name,
                     if (att == minVal)
                       Some(defaultSelected := true)
                     else
@@ -260,6 +282,7 @@ object SkillSelector {
       val names = min.productElementNames.toList
       val vals = min.productIterator.zip(max.productIterator).toList
       val sefts = min.getFieldTypes
+      println(s"Render minmax fields: $min ::: $names")
       div(
         className := min.toString + ",,," + max.toString,
         div(
@@ -268,7 +291,7 @@ object SkillSelector {
             .lazyZip(vals)
             .lazyZip(sefts)
             .map((fieldName, fieldValTup, seft) => {
-              renderMinMax(
+              renderMinMaxField(
                 fieldValTup._1,
                 fieldValTup._2,
                 seft,

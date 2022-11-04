@@ -113,6 +113,8 @@ object JsonParsing {
       : Format[SpikeScalingByAttributeAndType] =
     Json.format[SpikeScalingByAttributeAndType]
   implicit val formatSpikeSlots: Format[SpikeSlots] = Json.format[SpikeSlots]
+  implicit val formatTransformGeneric: Format[TransformGeneric] =
+    Json.format[TransformGeneric]
   implicit val formatTransformFixed: Format[TransformFixed] =
     Json.format[TransformFixed]
   implicit val formatTransformRandom: Format[TransformRandom] =

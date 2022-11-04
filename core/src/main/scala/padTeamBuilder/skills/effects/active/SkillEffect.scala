@@ -3,14 +3,18 @@ package padTeamBuilder.skills.effects.active
 import padTeamBuilder.model.Board.BoardPositionExtensions.countPositions
 import padTeamBuilder.model.Board.BoardPositions
 import padTeamBuilder.model._
-import padTeamBuilder.util.Util
-import padTeamBuilder.util.SkillEffectFieldType
 import padTeamBuilder.skills.ActiveSkill
+import padTeamBuilder.util.SkillEffectFieldType
+import padTeamBuilder.util.Util
 
 import scala.compiletime._
 import scala.deriving.*
 //is this a monoid?
-trait SkillEffectGeneric extends Product {
+sealed trait HasSkillType {
+  def skillType: SkillType
+}
+
+sealed trait SkillEffectGeneric extends HasSkillType with Product {
   def <=(that: SkillEffectGeneric): Boolean = SkillEffect.leq(this, that)
   def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric
   def getFieldTypes: List[SkillEffectFieldType]
@@ -49,37 +53,30 @@ object SkillEffect {
       thisEffect: SkillEffectGeneric,
       thatEffect: SkillEffectGeneric
   ): Boolean = {
-    val thisClass = thisEffect.getClass
-    val thatClass = thatEffect.getClass
-    if (thatClass == classOf[MultiEffect]) {
+    val thisSkillType = thisEffect.skillType
+    val thatSkillType = thatEffect.skillType
+    if (thatSkillType == SkillType.MultiEffect) {
       thatEffect
         .asInstanceOf[MultiEffect]
         .effects
         .exists(e => leq(thisEffect, e))
-    } else if (thisClass == classOf[MultiEffect]) {
+    } else if (thisSkillType == SkillType.MultiEffect) {
       thisEffect
         .asInstanceOf[MultiEffect]
         .effects
         .exists(e => leq(e, thatEffect))
     } else
-      (
-        thisClass.isAssignableFrom(thatClass) ||
-          thatClass.isAssignableFrom(thisClass)
-      ) && {
+      (thisSkillType == thatSkillType) && {
         val alwaysMatch = List(
-          classOf[NoEffect],
-          classOf[MultiEffect],
-          classOf[EvolvingEffect],
-          classOf[ConditionalEffect],
-          classOf[Transform]
+          SkillType.NoEffect,
+          SkillType.MultiEffect,
+          SkillType.EvolvingEffect,
+          SkillType.ConditionalEffect,
+          SkillType.Transform
         )
-        if (
-          alwaysMatch.exists(c =>
-            c.isAssignableFrom(thisClass) &&
-              c.isAssignableFrom(thatClass)
-          )
-        ) true
-        else {
+        (alwaysMatch.exists(st =>
+          st == thisSkillType || st == thatSkillType
+        )) || {
           val commonFields =
             thisEffect.productElementNames.toSet & thatEffect.productElementNames.toSet
           def getFieldsMap(
@@ -136,7 +133,7 @@ object SkillEffect {
 }
 
 case class NoEffect() extends SkillEffect("") {
-
+  override def skillType = SkillType.NoEffect
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[NoEffect]
   override def withNewField(
@@ -152,6 +149,7 @@ case class MultiEffect(effects: List[SkillEffect])
       // effects.zipWithIndex.map((e, i) => s"${i + 1}. $e").mkString("\n")
     ) {
 
+  override def skillType = SkillType.MultiEffect
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[MultiEffect]
   override def withNewField(
@@ -169,6 +167,7 @@ case class EvolvingEffect(loop: Boolean, skills: List[ActiveSkill])
           .map((skill, i) => s"Stage ${i + 1} (cd ${skill.cdStr}): \n${skill.skillEffect}")
           .mkString("\n")}"
     ) {
+  override def skillType = SkillType.EvolvingEffect
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[EvolvingEffect]
@@ -188,6 +187,7 @@ case class ConditionalEffect(
       s"$condition[\n$effect\n]"
     ) {
 
+  override def skillType = SkillType.ConditionalEffect
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ConditionalEffect]
   override def withNewField(
@@ -213,7 +213,10 @@ case class ConditionalComponentHP(hpReq: Int, needsToBeMore: Boolean)
       s"The following activates only if hp is ${
           if (needsToBeMore) "more" else "less"
         } than $hpReq%: "
-    )
+    ) {
+  override def skillType = SkillType.ConditionalComponentHP
+
+}
 
 case class ConditionalComponentFloor(floorReq: Int, needsToBeAfter: Boolean)
     extends ConditionalComponent
@@ -221,11 +224,14 @@ case class ConditionalComponentFloor(floorReq: Int, needsToBeAfter: Boolean)
       s"The following activates only if floor is ${
           if (needsToBeAfter) "after" else "before"
         } than $floorReq%: "
-    )
+    ) {
+  override def skillType = SkillType.ConditionalComponentFloor
+}
 
 case class ChangeTheWorld(
     seconds: Int
 ) extends SkillEffect(s"Move orbs freely for ${seconds} seconds. ") {
+  override def skillType = SkillType.ChangeTheWorld
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ChangeTheWorld]
@@ -243,6 +249,7 @@ case class CounterAttackSkill(
     att: Attribute,
     turns: Int
 ) extends SkillEffect(s"${multiplier}x $att counterattack for $turns turns. ") {
+  override def skillType = SkillType.CounterAttackSkill
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[CounterAttackSkill]
@@ -259,6 +266,7 @@ case class CounterAttackSkill(
 
 case class Suicide(percentLost: Double)
     extends SkillEffect(s"HP reduced by ${percentLost}%. ") {
+  override def skillType = SkillType.Suicide
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[Suicide]
@@ -278,6 +286,7 @@ case class DefenseBreak(
 ) extends SkillEffect(
       s"Reduce enemy defense by ${percent}% for $turns turns. "
     ) {
+  override def skillType = SkillType.DefenseBreak
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[DefenseBreak]
@@ -294,6 +303,7 @@ case class DefenseBreak(
 case class Delay(
     turns: Int
 ) extends SkillEffect(s"Delays enemies for ${turns} turns. ") {
+  override def skillType = SkillType.Delay
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[Delay]
@@ -309,6 +319,7 @@ case class Delay(
 case class EnhanceOrbs(
     attribute: Attribute
 ) extends SkillEffect(s"Enhances $attribute orbs. ") {
+  override def skillType = SkillType.EnhanceOrbs
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[EnhanceOrbs]
@@ -322,8 +333,9 @@ case class EnhanceOrbs(
     }
 }
 
-trait Gravity extends SkillEffectGeneric {
+sealed trait Gravity extends HasSkillType {
   val percent: Int
+  override def skillType = SkillType.Gravity
 }
 
 case class GravityFalse(
@@ -332,6 +344,7 @@ case class GravityFalse(
     with SkillEffect(
       s"Reduce all enemies' current HP by ${percent}% of their current HP. "
     ) {
+  override def skillType = SkillType.Gravity
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[GravityFalse]
@@ -349,6 +362,7 @@ case class GravityTrue(percent: Int)
     with SkillEffect(
       s"Reduce all enemies' current HP by $percent% of their max HP. "
     ) {
+  override def skillType = SkillType.Gravity
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[GravityTrue]
@@ -361,12 +375,15 @@ case class GravityTrue(percent: Int)
     }
 }
 
-sealed trait Heal extends SkillEffectGeneric
+sealed trait Heal extends HasSkillType {
+  override def skillType = SkillType.Heal
+}
 
 case class HealFlat(
     amount: Int
 ) extends Heal
     with SkillEffect(s"Heal ${amount} HP. ") {
+  override def skillType = SkillType.Heal
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HealFlat]
@@ -383,6 +400,7 @@ case class HealMultiplier(
     multiplier: Int
 ) extends Heal
     with SkillEffect(s"Heal ${multiplier}x this card's RCV. ") {
+  override def skillType = SkillType.Heal
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HealMultiplier]
@@ -399,6 +417,7 @@ case class HealPercentMax(
     percent: Int
 ) extends Heal
     with SkillEffect(s"Heal ${percent}% max HP. ") {
+  override def skillType = SkillType.Heal
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HealPercentMax]
@@ -416,6 +435,7 @@ case class HealScalingByAwakening(percent: Int, awks: List[Awakening])
     with SkillEffect(
       s"Heal $percent% RCV as HP for each ${awks.mkString(", ")} awakening on the team. "
     ) {
+  override def skillType = SkillType.Heal
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HealScalingByAwakening]
@@ -434,6 +454,7 @@ case class HealByTeamRCV(multiplier: Int)
     with SkillEffect(
       s"Heal ${multiplier}x of entire team's RCV. "
     ) {
+  override def skillType = SkillType.Heal
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HealByTeamRCV]
@@ -451,6 +472,7 @@ case class HealPerTurn(percent: Int, turns: Int)
     with SkillEffect(
       s"Heal $percent% max HP every turn for $turns turns. "
     ) {
+  override def skillType = SkillType.Heal
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HealPerTurn]
@@ -471,6 +493,7 @@ case class IncreaseSkyfall(
 ) extends SkillEffect(
       s"$percent% increased skyfall for ${colors.mkString(", ")} for $turns turns. "
     ) {
+  override def skillType = SkillType.IncreaseSkyfall
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[IncreaseSkyfall]
@@ -489,6 +512,7 @@ case class IncreaseSkyfall(
 case class MassAttack(
     turns: Int
 ) extends SkillEffect(s"Mass attacks for $turns turns. ") {
+  override def skillType = SkillType.MassAttack
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[MassAttack]
@@ -501,8 +525,9 @@ case class MassAttack(
     }
 }
 
-sealed trait OrbChange extends SkillEffectGeneric {
+sealed trait OrbChange extends HasSkillType {
   val atts: List[Attribute]
+  override def skillType = SkillType.OrbChange
 }
 
 case class OrbChangeAtoB(
@@ -511,6 +536,7 @@ case class OrbChangeAtoB(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes $from orbs to $to orbs. ") {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeAtoB]
@@ -534,6 +560,7 @@ case class OrbChangeFullBoard(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes all orbs to ${atts.mkString(", ")}. ") {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeFullBoard]
@@ -552,6 +579,7 @@ case class OrbChangeColumn(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes the $column column into $to. ") {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeColumn]
@@ -578,6 +606,7 @@ case class OrbChangeColumnRandom(
     with SkillEffect(
       s"Changes the $column column into a random mix of ${atts.mkString(", ")}. "
     ) {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeColumnRandom]
@@ -597,6 +626,7 @@ case class OrbChangeRow(
     atts: List[Attribute]
 ) extends OrbChange
     with SkillEffect(s"Changes the $row row into $to. ") {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeRow]
@@ -627,6 +657,7 @@ case class OrbChangeRandomSpawn(
         if (exclAtts.nonEmpty) s" from non [${exclAtts.mkString(", ")}] orbs"
         else ""
       }. ") {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeRow]
@@ -650,6 +681,7 @@ case class OrbChangePattern(
     with SkillEffect(
       s"Changes the following orbs to $to orbs: \n${Board.boardPositionsToCompleteStr(positions)}"
     ) {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangePattern]
@@ -677,6 +709,7 @@ case class OrbChangeMultiTarget(
     with SkillEffect(
       s"Changes ${sourceAtts.mkString(", ")} into a random mix of ${atts.mkString(", ")}"
     ) {
+  override def skillType = SkillType.OrbChange
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbChangeMultiTarget]
@@ -694,6 +727,7 @@ case class OrbChangeMultiTarget(
 case class Poison(
     multiplier: Int
 ) extends SkillEffect(s"Poisons enemies with ${multiplier}x ATK. ") {
+  override def skillType = SkillType.Poison
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[Poison]
@@ -707,6 +741,7 @@ case class Poison(
 }
 
 case class Refresh() extends SkillEffect(s"Replaces all orbs. ") {
+  override def skillType = SkillType.Refresh
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[Refresh]
@@ -717,14 +752,16 @@ case class Refresh() extends SkillEffect(s"Replaces all orbs. ") {
     ???
 }
 
-sealed trait RCVBoostSkill extends SkillEffectGeneric {
+sealed trait RCVBoostSkill extends HasSkillType {
   val turns: Int
+  override def skillType = SkillType.RCVBoost
 }
 case class RCVBoostMult(multiplier: Double, turns: Int)
     extends RCVBoostSkill
     with SkillEffect(
       s"${multiplier}x RCV for $turns turns. "
     ) {
+  override def skillType = SkillType.RCVBoost
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[RCVBoostMult]
@@ -746,6 +783,7 @@ case class RCVBoostByAwakening(
     with SkillEffect(
       s"1+(${rcvScaling}x) RCV for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     ) {
+  override def skillType = SkillType.RCVBoost
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[RCVBoostByAwakening]
@@ -769,6 +807,7 @@ case class RCVBoostByAttributeAndType(
     with SkillEffect(
       s"1+(${rcvScaling}x) RCV for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
     ) {
+  override def skillType = SkillType.RCVBoost
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[RCVBoostByAttributeAndType]
@@ -784,9 +823,10 @@ case class RCVBoostByAttributeAndType(
     }
 }
 
-sealed trait Shield extends SkillEffectGeneric {
+sealed trait Shield extends HasSkillType {
   val percent: Int
   val turns: Int
+  override def skillType = SkillType.Shield
 }
 case class ShieldAll(
     percent: Int,
@@ -795,6 +835,7 @@ case class ShieldAll(
     with SkillEffect(
       s"Reduces damage taken by ${percent}% for $turns turns. "
     ) {
+  override def skillType = SkillType.Shield
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ShieldAll]
@@ -816,6 +857,7 @@ case class ShieldAttribute(
     with SkillEffect(
       s"For $turns turns, ${percent}% reduced $attribute damage taken"
     ) {
+  override def skillType = SkillType.Shield
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ShieldAttribute]
@@ -838,6 +880,7 @@ case class ShieldScalingByAwakening(
 ) extends SkillEffect(
       s"${reductionScaling}% damage reduction for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     ) {
+  override def skillType = SkillType.Shield
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ShieldScalingByAwakening]
@@ -853,9 +896,10 @@ case class ShieldScalingByAwakening(
     }
 }
 
-trait Spike extends SkillEffectGeneric {
+sealed trait Spike extends SkillEffectGeneric {
   val multiplier: Double
   val turns: Int
+  override def skillType = SkillType.Spike
 }
 case class SpikeAttribute(
     multiplier: Double,
@@ -865,6 +909,7 @@ case class SpikeAttribute(
     with SkillEffect(
       s"${multiplier}x ATK for $att for $turns turns. "
     ) {
+  override def skillType = SkillType.Spike
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SpikeAttribute]
@@ -886,6 +931,7 @@ case class SpikeType(
 ) extends SkillEffect(
       s"${multiplier}x ATK for $cardType type for $turns turns. "
     ) {
+  override def skillType = SkillType.Spike
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SpikeType]
@@ -900,8 +946,9 @@ case class SpikeType(
     }
 }
 
-trait SpikeScaling extends SkillEffectGeneric {
+sealed trait SpikeScaling extends SkillEffectGeneric {
   val turns: Int
+  override def skillType = SkillType.SpikeScaling
 }
 
 case class SpikeScalingByAwakening(
@@ -912,6 +959,7 @@ case class SpikeScalingByAwakening(
     with SkillEffect(
       s"1+(${dmgScaling}x) ATK for each ${awks.mkString(", ")} awakening on the team for $turns turns. "
     ) {
+  override def skillType = SkillType.SpikeScaling
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SpikeScalingByAwakening]
@@ -935,6 +983,7 @@ case class SpikeScalingByAttributeAndType(
     with SkillEffect(
       s"1+(${dmgScaling}x) ATK for each ${(atts ++ types).mkString(", ")} card on the team for $turns turns. "
     ) {
+  override def skillType = SkillType.SpikeScaling
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SpikeScalingByAttributeAndType]
@@ -954,6 +1003,7 @@ case class SpikeSlots(multiplier: Double, slots: List[CardSlot], turns: Int)
     extends SkillEffect(
       s"${multiplier}x ATK for ${slots.mkString(", ")} for $turns turns. "
     ) {
+  override def skillType = SkillType.SpikeSlots
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SpikeSlots]
@@ -968,12 +1018,12 @@ case class SpikeSlots(multiplier: Double, slots: List[CardSlot], turns: Int)
     }
 }
 
-class Transform extends SkillEffectGeneric {
-  override def canEqual(that: Any): Boolean =
-    that.getClass() == classOf[Transform]
-  override def productArity: Int = 0
-  override def productElement(n: Int): Any = ???
+sealed trait Transform extends HasSkillType {
+  override def skillType = SkillType.Transform
+}
 
+case class TransformGeneric() extends Transform with SkillEffect("Transform") {
+  override def skillType = SkillType.Transform
   override def getFieldTypes: List[SkillEffectFieldType] = List()
   override def withNewField(
       fieldName: String,
@@ -985,7 +1035,20 @@ case class TransformFixed(
     targetId: Int,
     targetName: String
 ) extends Transform
-    with SkillEffect(s"Transform into #$targetId - $targetName") {}
+    with SkillEffect(s"Transform into #$targetId - $targetName") {
+
+  override def skillType = SkillType.Transform
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[TransformFixed]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    fieldName match {
+      case "targetId"   => this.copy(targetId = newValue.asInstanceOf[Int])
+      case "targetName" => this.copy(targetName = newValue.asInstanceOf[String])
+    }
+}
 
 case class TransformRandom(targets: List[(Int, String)])
     extends Transform
@@ -993,14 +1056,29 @@ case class TransformRandom(targets: List[(Int, String)])
       s"Transforms randomly into one of the following: \n${targets.zipWithIndex
           .map((targ, ind) => s"${ind + 1}. ${targ._1} - ${targ._2}")
           .mkString("\n")}"
-    ) {}
+    ) {
+  override def skillType = SkillType.Transform
+  override def getFieldTypes: List[SkillEffectFieldType] =
+    Util.getFieldTypes[TransformRandom]
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric =
+    fieldName match {
+      case "targets" =>
+        this.copy(targets = newValue.asInstanceOf[List[(Int, String)]])
+    }
+}
 
-trait LeadSwap extends SkillEffectGeneric
+sealed trait LeadSwap extends HasSkillType {
+  override def skillType = SkillType.LeadSwap
+}
 case class LeadSwapThisCard()
     extends LeadSwap
     with SkillEffect(
       s"Switches places with leader. Switch back when used again. "
     ) {
+  override def skillType = SkillType.LeadSwap
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[LeadSwapThisCard]
@@ -1016,6 +1094,7 @@ case class LeadSwapRightMost()
     with SkillEffect(
       "Switches leader and rightmost sub. Switch back when used again."
     ) {
+  override def skillType = SkillType.LeadSwap
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[LeadSwapRightMost]
@@ -1028,6 +1107,7 @@ case class LeadSwapRightMost()
 
 case class AwokenBindClear(turns: Int)
     extends SkillEffect(s"Awoken bind reduced for $turns turns. ") {
+  override def skillType = SkillType.AwokenBindClear
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[AwokenBindClear]
@@ -1042,6 +1122,7 @@ case class AwokenBindClear(turns: Int)
 
 case class BindClear(turns: Int)
     extends SkillEffect(s"Bind reduced for $turns turns. ") {
+  override def skillType = SkillType.BindClear
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[BindClear]
@@ -1060,6 +1141,7 @@ case class Random(effects: List[ActiveSkill])
         effects.zipWithIndex.map((s, i) => s"${i + 1}. $s").mkString("\n")
       s"Randomly activates one of the following: \n$skills"
     }) {
+  override def skillType = SkillType.Random
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[Random]
@@ -1070,8 +1152,9 @@ case class Random(effects: List[ActiveSkill])
     ???
 }
 
-trait TimeExtendSkill extends SkillEffectGeneric {
+sealed trait TimeExtendSkill extends HasSkillType {
   val turns: Int
+  override def skillType = SkillType.TimeExtend
 }
 
 case class TimeExtendFlat(seconds: Int, turns: Int)
@@ -1079,6 +1162,7 @@ case class TimeExtendFlat(seconds: Int, turns: Int)
     with SkillEffect(
       s"${if (seconds > 0) "Extends" else "Reduces"} move time by $seconds seconds for $turns turns. "
     ) {
+  override def skillType = SkillType.TimeExtend
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[TimeExtendFlat]
@@ -1097,6 +1181,7 @@ case class TimeExtendMult(mult: Double, turns: Int)
     with SkillEffect(
       s"${mult}x move time for $turns turns. "
     ) {
+  override def skillType = SkillType.TimeExtend
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[TimeExtendMult]
@@ -1112,6 +1197,7 @@ case class TimeExtendMult(mult: Double, turns: Int)
 
 case class AttributeChangeSelf(turns: Int, att: Attribute)
     extends SkillEffect(s"Changes own attribute to $att for $turns turns. ") {
+  override def skillType = SkillType.AttributeChangeSelf
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[AttributeChangeSelf]
@@ -1125,16 +1211,15 @@ case class AttributeChangeSelf(turns: Int, att: Attribute)
     }
 }
 
-class Haste(t: Int) extends SkillEffectGeneric {
-  val turns: Int = t
-  override def canEqual(that: Any): Boolean = that.getClass() == classOf[Haste]
+sealed trait HasteEffect extends HasSkillType {
+  val turns: Int
+  override def skillType = SkillType.Haste
+}
 
-  override def productElement(n: Int): Any = if (n == 0) turns else ???
-
-  override def productElementName(n: Int): String = if (n == 0) "turns" else ???
-
-  override def productArity: Int = 1
-
+case class Haste(override val turns: Int)
+    extends HasteEffect
+    with SkillEffectGeneric {
+  override def skillType = SkillType.Haste
   override def getFieldTypes: List[SkillEffectFieldType] = List(
     SkillEffectFieldType.INT
   )
@@ -1149,9 +1234,9 @@ class Haste(t: Int) extends SkillEffectGeneric {
 }
 
 case class HasteFixed(override val turns: Int)
-    extends Haste(turns)
+    extends HasteEffect
     with SkillEffect(s"Team skills charged by $turns turns. ") {
-
+  override def skillType = SkillType.Haste
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HasteFixed]
   override def withNewField(
@@ -1164,11 +1249,11 @@ case class HasteFixed(override val turns: Int)
 }
 
 case class HasteRandom(override val turns: Int, turnsMax: Int)
-    extends Haste(turns)
+    extends HasteEffect
     with SkillEffect(
       s"Team skills charged by $turns-$turnsMax turns at random. "
     ) {
-
+  override def skillType = SkillType.Haste
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[HasteRandom]
   override def withNewField(
@@ -1185,6 +1270,7 @@ case class LockOrbs(colors: List[Attribute], numOrbs: Int)
     extends SkillEffect(
       s"Locks ${if (numOrbs < 42) s"$numOrbs " else ""}${colors.mkString(", ")} orbs. "
     ) {
+  override def skillType = SkillType.LockOrbs
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[LockOrbs]
@@ -1199,8 +1285,9 @@ case class LockOrbs(colors: List[Attribute], numOrbs: Int)
     }
 }
 
-trait ChangeEnemyAttribute extends SkillEffectGeneric {
+sealed trait ChangeEnemyAttribute extends HasSkillType {
   val att: Attribute
+  override def skillType = SkillType.ChangeEnemyAttribute
 }
 
 case class ChangeEnemyAttributePermanent(att: Attribute)
@@ -1208,6 +1295,7 @@ case class ChangeEnemyAttributePermanent(att: Attribute)
     with SkillEffect(
       s"Changes all enemies' attribute to $att. "
     ) {
+  override def skillType = SkillType.ChangeEnemyAttribute
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ChangeEnemyAttributePermanent]
@@ -1225,6 +1313,7 @@ case class ChangeEnemyAttributeTemporary(att: Attribute, turns: Int)
     with SkillEffect(
       s"Changes all enemies' attribute to $att for $turns turns. "
     ) {
+  override def skillType = SkillType.ChangeEnemyAttribute
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ChangeEnemyAttributeTemporary]
@@ -1242,6 +1331,7 @@ case class AddCombosSkill(combos: Int, turns: Int)
     extends SkillEffect(
       s"Adds $combos combo${if (combos == 1) "" else "s"} for $turns turns. "
     ) {
+  override def skillType = SkillType.AddCombosSkill
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[AddCombosSkill]
@@ -1255,12 +1345,16 @@ case class AddCombosSkill(combos: Int, turns: Int)
     }
 }
 
-trait Void extends SkillEffectGeneric
+sealed trait Void extends HasSkillType {
+  override def skillType = SkillType.Void
+}
 
 case class VoidDamageAbsorb(turns: Int)
-    extends SkillEffect(
+    extends Void
+    with SkillEffect(
       s"Voids damage absorption for $turns turns. "
     ) {
+  override def skillType = SkillType.Void
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[VoidDamageAbsorb]
@@ -1274,9 +1368,11 @@ case class VoidDamageAbsorb(turns: Int)
 }
 
 case class VoidAttributeAbsorb(turns: Int)
-    extends SkillEffect(
+    extends Void
+    with SkillEffect(
       s"Voids attribute absorption for $turns turns. "
     ) {
+  override def skillType = SkillType.Void
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[VoidAttributeAbsorb]
@@ -1290,9 +1386,11 @@ case class VoidAttributeAbsorb(turns: Int)
 }
 
 case class VoidVoid(turns: Int)
-    extends SkillEffect(
+    extends Void
+    with SkillEffect(
       s"Voids damage void for $turns turns. "
     ) {
+  override def skillType = SkillType.Void
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[VoidVoid]
@@ -1309,6 +1407,7 @@ case class EnhancedSkyfall(percent: Int, turns: Int)
     extends SkillEffect(
       s"$percent% chance for enhanced skyfall orbs for $turns turns. "
     ) {
+  override def skillType = SkillType.EnhancedSkyfall
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[EnhancedSkyfall]
@@ -1327,6 +1426,7 @@ case class OrbTrace()
       "Unlocks all orbs. \nChanges all orbs to Fire, Water, Wood and Light. \nTraces a 3-combo path on Normal dungeons with 3-linked matches."
     ) {
 
+  override def skillType = SkillType.OrbTrace
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[OrbTrace]
   override def withNewField(
@@ -1336,10 +1436,15 @@ case class OrbTrace()
     ???
 }
 
+trait AllyDelayEffect extends HasSkillType {
+  override def skillType = SkillType.AllyDelay
+}
+
 case class AllyDelay(turns: Int)
     extends SkillEffect(
       s"Delays team's skills for $turns turns. "
     ) {
+  override def skillType = SkillType.AllyDelay
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[AllyDelay]
@@ -1356,6 +1461,7 @@ case class AllyDelayRange(minTurns: Int, maxTurns: Int)
     extends SkillEffect(
       s"Delays team's skills for $minTurns-$maxTurns turns. "
     ) {
+  override def skillType = SkillType.AllyDelay
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[AllyDelayRange]
@@ -1370,6 +1476,7 @@ case class AllyDelayRange(minTurns: Int, maxTurns: Int)
 }
 
 case class UnlockOrbs() extends SkillEffect("Unlock all orbs. ") {
+  override def skillType = SkillType.UnlockOrbs
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[UnlockOrbs]
@@ -1384,6 +1491,7 @@ case class UnmatchableClear(turns: Int)
     extends SkillEffect(
       s"Unmatchable reduced status by $turns turns. "
     ) {
+  override def skillType = SkillType.UnmatchableClear
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[UnmatchableClear]
@@ -1401,6 +1509,7 @@ case class NoSkyfallSkill(turns: Int)
       s"No skyfall combos for $turns turns. "
     ) {
 
+  override def skillType = SkillType.NoSkyfallSkill
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[NoSkyfallSkill]
   override def withNewField(
@@ -1412,10 +1521,11 @@ case class NoSkyfallSkill(turns: Int)
     }
 }
 
-trait Spinner extends SkillEffectGeneric {
+sealed trait Spinner extends HasSkillType {
   val numSpinners: Int
   val speed: Double
   val turns: Int
+  override def skillType = SkillType.Spinner
 }
 
 case class SpinnerRandom(numSpinners: Int, speed: Double, turns: Int)
@@ -1423,6 +1533,7 @@ case class SpinnerRandom(numSpinners: Int, speed: Double, turns: Int)
     with SkillEffect(
       s"Spawn $numSpinners spinners at random at $speed for $turns turns. "
     ) {
+  override def skillType = SkillType.Spinner
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SpinnerRandom]
@@ -1447,6 +1558,7 @@ case class SpinnerFixed(
       s"Spawn spinners in the following positions: \n${Board
           .boardPositionsToCompleteStr(positions)} \nat $speed speed for $turns turns."
     ) {
+  override def skillType = SkillType.Spinner
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SpinnerFixed]
@@ -1474,6 +1586,7 @@ case class LockedSkyfall(atts: List[Attribute], turns: Int)
       s"${atts.mkString(", ")} skyfall locked for $turns turns. "
     ) {
 
+  override def skillType = SkillType.LockedSkyfall
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[LockedSkyfall]
   override def withNewField(
@@ -1491,6 +1604,7 @@ case class UnableToUseSkills(turns: Int)
       s"Unable to use skills for $turns turns. "
     ) {
 
+  override def skillType = SkillType.UnableToUseSkills
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[UnableToUseSkills]
   override def withNewField(
@@ -1507,6 +1621,7 @@ case class SelfUnmatchable(atts: List[Attribute], turns: Int)
       s"${atts.mkString(", ")} orbs are unmatchable for $turns turns. "
     ) {
 
+  override def skillType = SkillType.SelfUnmatchable
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[SelfUnmatchable]
   override def withNewField(
@@ -1524,6 +1639,7 @@ case class NailOrbSkyfall(skyfallChance: Int, turns: Int)
       s"$skyfallChance% nail orb skyfall for $turns turns. "
     ) {
 
+  override def skillType = SkillType.NailOrbSkyfall
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[NailOrbSkyfall]
   override def withNewField(
@@ -1541,6 +1657,7 @@ case class MaxHPMult(multiplier: Double, turns: Int)
     extends SkillEffect(
       s"${multiplier}x max HP for $turns turns. "
     ) {
+  override def skillType = SkillType.MaxHPMult
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[MaxHPMult]
@@ -1564,6 +1681,7 @@ case class ImmediateDamage(
         drain.map(p => s" and heal $p% of the damage").getOrElse("")
       s"Inflicts $amount $damageType on $target$drainText. "
     }) {
+  override def skillType = SkillType.ImmediateDamage
 
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[ImmediateDamage]
@@ -1620,7 +1738,7 @@ case class TimeReducedForTop2(args: List[Int])
     extends SkillEffect(
       s"Orb move time halved for 1 turn for the top 2 ranked players"
     ) {
-
+  override def skillType = SkillType.TimeReducedForTop2
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[TimeReducedForTop2]
   override def withNewField(
