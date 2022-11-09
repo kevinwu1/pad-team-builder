@@ -100,7 +100,6 @@ object CardResults {
       div(
         children <-- cardResults
           .map(c => {
-            println("slice!!!!!")
             c.slice(0, RESULTS_MAX)
           })
           .map(v => v.map((csr, rank) => (csr._1, csr._2, rank)).toVector)

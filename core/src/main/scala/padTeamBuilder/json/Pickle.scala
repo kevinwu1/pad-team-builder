@@ -117,12 +117,12 @@ object Pickle {
   implicit val formatHasteFixed: ReadWriter[HasteFixed] = macroRW[HasteFixed]
   implicit val formatHasteRandom: ReadWriter[HasteRandom] = macroRW[HasteRandom]
   implicit val formatLockOrbs: ReadWriter[LockOrbs] = macroRW[LockOrbs]
-  implicit val formatChangeEnemyAttributePermanent
-      : ReadWriter[ChangeEnemyAttributePermanent] =
-    macroRW[ChangeEnemyAttributePermanent]
-  implicit val formatChangeEnemyAttributeTemporary
-      : ReadWriter[ChangeEnemyAttributeTemporary] =
-    macroRW[ChangeEnemyAttributeTemporary]
+  implicit val formatAttributeChangeEnemyPermanent
+      : ReadWriter[AttributeChangeEnemyPermanent] =
+    macroRW[AttributeChangeEnemyPermanent]
+  implicit val formatAttributeChangeEnemyTemporary
+      : ReadWriter[AttributeChangeEnemyTemporary] =
+    macroRW[AttributeChangeEnemyTemporary]
   implicit val formatOrbChangeMultiTarget: ReadWriter[OrbChangeMultiTarget] =
     macroRW[OrbChangeMultiTarget]
   implicit val formatAddCombosSkill: ReadWriter[AddCombosSkill] =
@@ -254,8 +254,8 @@ object Pickle {
     formatHasteFixed,
     formatHasteRandom,
     formatLockOrbs,
-    formatChangeEnemyAttributePermanent,
-    formatChangeEnemyAttributeTemporary,
+    formatAttributeChangeEnemyPermanent,
+    formatAttributeChangeEnemyTemporary,
     formatOrbChangeMultiTarget,
     formatAddCombosSkill,
     formatVoidDamageAbsorb,

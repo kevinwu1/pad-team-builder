@@ -136,12 +136,12 @@ object JsonParsing {
   implicit val formatHasteFixed: Format[HasteFixed] = Json.format[HasteFixed]
   implicit val formatHasteRandom: Format[HasteRandom] = Json.format[HasteRandom]
   implicit val formatLockOrbs: Format[LockOrbs] = Json.format[LockOrbs]
-  implicit val formatChangeEnemyAttributePermanent
-      : Format[ChangeEnemyAttributePermanent] =
-    Json.format[ChangeEnemyAttributePermanent]
-  implicit val formatChangeEnemyAttributeTemporary
-      : Format[ChangeEnemyAttributeTemporary] =
-    Json.format[ChangeEnemyAttributeTemporary]
+  implicit val formatAttributeChangeEnemyPermanent
+      : Format[AttributeChangeEnemyPermanent] =
+    Json.format[AttributeChangeEnemyPermanent]
+  implicit val formatAttributeChangeEnemyTemporary
+      : Format[AttributeChangeEnemyTemporary] =
+    Json.format[AttributeChangeEnemyTemporary]
   implicit val formatOrbChangeMultiTarget: Format[OrbChangeMultiTarget] =
     Json.format[OrbChangeMultiTarget]
   implicit val formatAddCombosSkill: Format[AddCombosSkill] =

@@ -115,7 +115,6 @@ object Util {
         p
       })
     s.addObserver(Observer[Vector[Card]] { newCards =>
-      println("Got new Cards!")
       cards.update(v => v ++ newCards)
     })(unsafeWindowOwner)
     cards.signal

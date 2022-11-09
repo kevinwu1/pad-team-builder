@@ -288,7 +288,7 @@ object ActiveSkill {
         else HasteRandom(args(0), args(1))
       case 152 =>
         LockOrbs(Attribute.fromBitFlag(args(0)), args(1))
-      case 153 => ChangeEnemyAttributePermanent(Attribute.from(args(0)))
+      case 153 => AttributeChangeEnemyPermanent(Attribute.from(args(0)))
       case 154 => {
         val inputColors = Attribute.fromBitFlag(args(0))
         val outputColors = Attribute.fromBitFlag(args(1))
@@ -391,7 +391,7 @@ object ActiveSkill {
         if (args(0) == args(1)) AllyDelay(turns = args(0))
         else AllyDelayRange(minTurns = args(0), maxTurns = args(1))
       case 224 =>
-        ChangeEnemyAttributeTemporary(att = Attribute.from(1), turns = args(0))
+        AttributeChangeEnemyTemporary(att = Attribute.from(1), turns = args(0))
       case 225 =>
         if (args(0) != 0)
           ConditionalComponentHP(hpReq = args(0), needsToBeMore = true)
