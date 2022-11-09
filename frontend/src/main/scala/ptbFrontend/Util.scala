@@ -110,8 +110,9 @@ object Util {
       )
       .map(req => {
         println("parsing")
+        val st = System.nanoTime()
         val p = JsonParsing.cardsFromJson(req.responseText)
-        println("parsed")
+        println(s"parsed in ${(System.nanoTime() - st) / 1e9} seconds")
         p
       })
     s.addObserver(Observer[Vector[Card]] { newCards =>

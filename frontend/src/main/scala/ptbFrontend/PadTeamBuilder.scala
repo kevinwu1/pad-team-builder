@@ -67,20 +67,12 @@ object PadTeamBuilder {
     def update = new Wrapper(p)
   }
 
-  val cardResults: Var[Vector[RankedCardSearchResult]] = Var(Vector())
-
-  cards.signal
+  val cardResults: Signal[Vector[RankedCardSearchResult]] = cards.signal
     .combineWith(selectedAwakenings.signal)
     .combineWith(asExpression.signal)
     .combineWith(resultsRanker.signal)
     .combineWith(isDesc.signal)
-    .addObserver(Observer { nextValue =>
-      val cards = nextValue._1
-      val awaks = nextValue._2
-      val asExpression = nextValue._3
-      val ranker = nextValue._4
-      val isDesc = nextValue._5
-      println(s"Setting, desc: $isDesc")
+    .mapN((cards, awaks, asExpression, ranker, isDesc) => {
       val ordering = orderingFromRanker(ranker, isDesc)
 
       val pq =
@@ -96,17 +88,15 @@ object PadTeamBuilder {
           }
         )
       })
-      cardResults.update(w => {
-        pq.dequeueAll.toVector.reverse
-      })
-    })(unsafeWindowOwner)
+      pq.dequeueAll.toVector.reverse
+    })
 
   def main(args: Array[String]): Unit = {
     val rootElement: HtmlElement = div(
       AwakeningSelector.renderAwakeningSelector(selectedAwakenings),
       SkillSelector.renderSkillSelector(asExpression),
       CardResults.renderCardResults(
-        cardResults.signal
+        cardResults
       )
     )
     val containerNode = dom.document.querySelector("#root")
