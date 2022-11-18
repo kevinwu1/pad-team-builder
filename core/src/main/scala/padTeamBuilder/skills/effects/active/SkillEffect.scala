@@ -143,7 +143,7 @@ case class NoEffect() extends SkillEffect("") {
       fieldName: String,
       newValue: Any
   ): SkillEffectGeneric = ???
-
+  override def canMatch(that: SkillEffectGeneric): Boolean = true
 }
 
 case class MultiEffect(effects: List[SkillEffect])
@@ -238,10 +238,33 @@ case class AddCombosSkill(combos: Int, turns: Int)
     }
 }
 
-trait AllyDelayEffect {}
+trait AllyDelayEffect {
+  val turns: Int
+}
+
+case class AllyDelayGeneric(override val turns: Int)
+    extends AllyDelayEffect
+    with SkillEffectGeneric {
+  override def getFieldTypes: List[SkillEffectFieldType] = List(
+    SkillEffectFieldType.INT
+  )
+  override def withNewField(
+      fieldName: String,
+      newValue: Any
+  ): SkillEffectGeneric = {
+    fieldName match {
+      case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
+    }
+  }
+  override def canMatch(that: SkillEffectGeneric): Boolean = {
+    val thatClass = that.getClass
+    thatClass == classOf[AllyDelay] || thatClass == classOf[AllyDelayRange]
+  }
+}
 
 case class AllyDelay(turns: Int)
-    extends SkillEffect(
+    extends AllyDelayEffect
+    with SkillEffect(
       s"Delays team's skills for $turns turns. "
     ) {
   override def getFieldTypes: List[SkillEffectFieldType] =
@@ -255,9 +278,10 @@ case class AllyDelay(turns: Int)
     }
 }
 
-case class AllyDelayRange(minTurns: Int, maxTurns: Int)
-    extends SkillEffect(
-      s"Delays team's skills for $minTurns-$maxTurns turns. "
+case class AllyDelayRange(turns: Int, maxTurns: Int)
+    extends AllyDelayEffect
+    with SkillEffect(
+      s"Delays team's skills for $turns-$maxTurns turns. "
     ) {
   override def getFieldTypes: List[SkillEffectFieldType] =
     Util.getFieldTypes[AllyDelayRange]
@@ -266,7 +290,7 @@ case class AllyDelayRange(minTurns: Int, maxTurns: Int)
       newValue: Any
   ): SkillEffectGeneric =
     fieldName match {
-      case "minTurns" => this.copy(minTurns = newValue.asInstanceOf[Int])
+      case "turns"    => this.copy(turns = newValue.asInstanceOf[Int])
       case "maxTurns" => this.copy(maxTurns = newValue.asInstanceOf[Int])
     }
 }

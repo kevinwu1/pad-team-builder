@@ -389,7 +389,7 @@ object ActiveSkill {
         SelfUnmatchable(atts = Attribute.fromBitFlag(args(1)), turns = args(0))
       case 218 =>
         if (args(0) == args(1)) AllyDelay(turns = args(0))
-        else AllyDelayRange(minTurns = args(0), maxTurns = args(1))
+        else AllyDelayRange(turns = args(0), maxTurns = args(1))
       case 224 =>
         AttributeChangeEnemyTemporary(att = Attribute.from(1), turns = args(0))
       case 225 =>

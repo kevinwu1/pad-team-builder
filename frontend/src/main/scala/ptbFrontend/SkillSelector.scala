@@ -29,54 +29,118 @@ object SkillSelector {
     m(k)
   }
 
+  object SkillEffectExtension {
+    extension [T <: SkillEffectGeneric](seg: T) {
+      def --:(that: SkillEffectGeneric) = ASMinMax(seg, that)
+    }
+  }
+  object ArrowAssocExtension {
+    extension (v: String) {
+      def ->:(that: ASFilter) = v -> that
+    }
+  }
+
+  object ASSelect {
+    def from(selectedName: String, options: Map[String, ASFilter]): ASSelect =
+      ASSelect(options(selectedName), selectedName, options)
+  }
+
   case class ASSelect(
-      child: Option[ASFilter],
+      child: ASFilter,
       selectedName: String,
-      val options: Map[String, Option[ASFilter]] = Map(
-        "" -> None,
-        "Transform" -> Some(
-          ASSingle(TransformGeneric())
-        ),
-        "EvolvingEffect" -> Some(
-          ASSingle(EvolvingEffect(false, List()))
-        ),
-        "Conditional" -> Some(ASSingle(ConditionalEffect(null, null))),
-        "ChangeTheWorld" ->
-          Some(ASMinMax(ChangeTheWorld(0), ChangeTheWorld(100))),
-        "CounterAttack" -> Some(
-          ASMinMax(
-            CounterAttackSkill(0, Attribute.NONE, 0),
-            CounterAttackSkill(9999, Attribute.NONE, 9999)
-          )
-        ),
-        "Suicide" -> Some(ASMinMax(Suicide(0.0), Suicide(100.0))),
-        "DefenseBreak" -> Some(
-          ASMinMax(
-            DefenseBreak(0, 1),
-            DefenseBreak(100, 10)
-          )
-        ),
-        "Delay" -> Some(ASMinMax(Delay(0), Delay(100))),
-        "EnhanceOrbs" -> Some(
-          ASMinMax(EnhanceOrbs(Attribute.NONE), EnhanceOrbs(Attribute.NONE))
-        ),
-        "Haste" -> Some(
-          ASSelect(
-            Some(ASMinMax(Haste(0), Haste(100))),
-            "Any",
-            Map(
-              "Any" -> Some(ASMinMax(Haste(0), Haste(100))),
-              "HasteFixed" -> Some(ASMinMax(HasteFixed(0), HasteFixed(100))),
-              "HasteRandom" -> Some(
-                ASMinMax(HasteRandom(0, 0), HasteRandom(100, 100))
+      val options: Map[String, ASFilter] = {
+        import SkillEffectExtension.--:
+        import ptbFrontend.SkillSelector.SkillEffectExtension.--:
+        import ArrowAssocExtension.->:
+        Map(
+          "" -> ASSingle(NoEffect()),
+          "Transform" ->
+            ASSingle(TransformGeneric()),
+          "EvolvingEffect" ->
+            ASSingle(EvolvingEffect(false, List())),
+          "AddCombos" ->:
+            AddCombosSkill(0, 0) --: AddCombosSkill(100, 100),
+          "AllyDelay" ->
+            ASSelect.from(
+              "Any",
+              Map(
+                "Any" ->:
+                  AllyDelayGeneric(0) --: AllyDelayGeneric(100),
+                "AllyDelay" ->: AllyDelay(0) --: AllyDelay(100),
+                "AllyDelayRange" ->: AllyDelayRange(0, 0) --:
+                  AllyDelayRange(100, 100)
               )
-            )
-          )
-        ),
-        "NoSkyfall" -> Some(ASMinMax(NoSkyfallSkill(0), NoSkyfallSkill(100)))
-      )
+            ),
+          "AttributeChangeEnemy" ->
+            ASSelect.from(
+              "Any",
+              Map(
+                "Any" ->: AttributeChangeEnemy(Attribute.NONE) --:
+                  AttributeChangeEnemy(Attribute.NONE),
+                "AttributeChangeEnemyPermanent" ->: AttributeChangeEnemyPermanent(
+                  Attribute.NONE
+                ) --: AttributeChangeEnemyPermanent(Attribute.NONE),
+                "AttributeChangeEnemyTemporary" ->:
+                  AttributeChangeEnemyTemporary(Attribute.NONE, 0) --:
+                  AttributeChangeEnemyTemporary(Attribute.NONE, 100)
+              )
+            ),
+          "Conditional" -> ASSingle(ConditionalEffect(null, null)),
+          "ChangeTheWorld" ->:
+            ChangeTheWorld(0) --: ChangeTheWorld(100),
+          "CounterAttack" ->:
+            CounterAttackSkill(0, Attribute.NONE, 0) --:
+            CounterAttackSkill(9999, Attribute.NONE, 9999),
+          "DefenseBreak" ->:
+            DefenseBreak(0, 1) --:
+            DefenseBreak(100, 10),
+          "Delay" ->: Delay(0) --: Delay(100),
+          "EnhanceOrbs" ->: EnhanceOrbs(Attribute.NONE) --:
+            EnhanceOrbs(Attribute.NONE),
+          "EnhancedSkyfall" ->: EnhancedSkyfall(0, 0) --:
+            EnhancedSkyfall(100, 100),
+          "Gravity" ->
+            ASSelect.from(
+              "Any",
+              Map(
+                "Any" ->: GravityGeneric(0) --: GravityGeneric(100),
+                "Normal Gravity" ->: GravityFalse(0) --: GravityFalse(100),
+                "True Gravity" ->: GravityTrue(0) --: GravityTrue(100)
+              )
+            ),
+          "Haste" ->
+            ASSelect.from(
+              "Any",
+              Map(
+                "Any" ->: Haste(0) --: Haste(100),
+                "HasteFixed" ->: HasteFixed(0) --: HasteFixed(100),
+                "HasteRandom" ->: HasteRandom(0, 0) --: HasteRandom(100, 100)
+              )
+            ),
+          "Heal" ->
+            ASSelect.from(
+              "Any",
+              Map(
+                "Any" ->: HealGeneric() --: HealGeneric(),
+                "HealFlat" ->: HealFlat(0) --: HealFlat(999999),
+                "HealMultiplier" ->: HealMultiplier(0) --: HealMultiplier(
+                  999999
+                ),
+                "HealPercentMax" ->: HealPercentMax(0) --: HealPercentMax(100),
+                "HealScalingByAwakening" ->: HealScalingByAwakening(
+                  0,
+                  List()
+                ) --: HealScalingByAwakening(100, List()),
+                "HealByTeamRCV" ->: HealByTeamRCV(0) --: HealByTeamRCV(100),
+                "HealPerTurn" ->: HealPerTurn(0, 0) --: HealPerTurn(100, 100)
+              )
+            ),
+          "NoSkyfall" ->: NoSkyfallSkill(0) --: NoSkyfallSkill(100),
+          "Suicide" ->: Suicide(0.0) --: Suicide(100.0)
+        )
+      }
   ) extends ASFilter {
-    override def test(t: SkillEffect) = child.map(_.test(t)).getOrElse(true)
+    override def test(t: SkillEffect) = child.test(t)
     override def render(
         contextBuilder: ASFilter => ASFilter,
         asFilterState: Var[ASFilter]
@@ -107,17 +171,15 @@ object SkillSelector {
             )
           }) --> asFilterState
         ),
-        child.map(
-          _.render(
-            x => contextBuilder(ASSelect(Option(x), selectedName, options)),
-            asFilterState
-          )
+        child.render(
+          x => contextBuilder(ASSelect(x, selectedName, options)),
+          asFilterState
         )
       )
     }
   }
 
-  def makeDefault = () => ASSelect(None, "")
+  def makeDefault = () => ASSelect(ASSingle(NoEffect()), "")
 
   case class ASSingle[T <: SkillEffectGeneric](skillEffect: T)
       extends ASFilter {
