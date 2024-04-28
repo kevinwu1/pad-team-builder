@@ -1,7 +1,8 @@
 package padTeamBuilder.skills
 
-import padTeamBuilder.model._
-import padTeamBuilder.skills.effects.active._
+import padTeamBuilder.model.*
+import padTeamBuilder.skills.effects.active.*
+import padTeamBuilder.util.Util.toAttList
 
 case class ActiveSkill(
     name: String,
@@ -210,11 +211,32 @@ object ActiveSkill {
           Some(args(2))
         )
       case 116 => {
-        args
+        val effects = args
           .map(jsdId =>
-            effectsFromJson(skillData(jsdId), skillData, cardData).skillEffect
+            try {
+              effectsFromJson(skillData(jsdId), skillData, cardData).skillEffect
+            } catch {
+              case e: NotImplementedError =>
+                println(s"jsid: ${jsdId}")
+                println(s"args: $args")
+                println(
+                  s"args2: ${args.map(skillData).map(x => x.id + "->" + x.internalEffectId)}"
+                )
+                println("desc: ")
+                println(jsd.desc)
+                ???
+            }
           )
-          .reduceRight(_ and _)
+        val (conditions, nonconditions) =
+          effects.partition(_.isInstanceOf[ConditionalComponent])
+        assert(conditions.size <= 1, "up to 1 conditional")
+        if (conditions.nonEmpty) {
+          ConditionalEffect(
+            condition = conditions.head.asInstanceOf[ConditionalComponent],
+            effect = nonconditions.reduce(_ and _)
+          )
+        } else
+          effects.reduceRight(_ and _)
       }
       case 117 =>
         val effects = List(
@@ -467,7 +489,72 @@ object ActiveSkill {
         TransformRandom(
           targets = args.map(i => (i, cardData(i).name))
         )
-      case 237 => MaxHPMult(args(1) / 100.0, args(0))
+      case 237 => MaxHPMult(multiplier = args(1) / 100.0, turns = args(0))
+      case 238 => SelfCloud(width = args(1), height = args(2), turns = args(0))
+      case 239 => SelfTapeColumn(column = args(0), turns = args(1))
+      case 241 => SetSelfDamageCap(cap = args(1), turns = args(0))
+      case 243 =>
+        SkyfallThorns(
+          chance = args(3),
+          atts = args(1).toAttList,
+          turns = args(0)
+        )
+      case 244 => BoardExpand7x6(turns = args(0))
+      case 246 =>
+        ChangeTheWorldDamageCapComboComboConditional(
+          seconds = args(0),
+          comboMinimum = args(1),
+          cap = args(2)
+        )
+      case 247 =>
+        ChangeTheWorldDamageCapComboColorConditional(
+          seconds = args(0),
+          colors = args(2),
+          cap = args(3)
+        )
+      case 248 =>
+        DelayedActivation(
+          args(0),
+          effect = effectsFromJson(
+            skillData(args(0)),
+            skillData,
+            cardData
+          ).skillEffect
+        )
+      case 249 =>
+        CustomSpinner(
+          numberOfSpinners = args(7),
+          turns = args(0),
+          atts = args(1).toAttList
+        )
+      case 250 => ActiveSkillVanishes()
+      case 251 => SelfBlind(orbs = args(1), turns = args(0))
+      case 253 => SkyfallForesight(args(0))
+      case 255 => OnlyUsableWhen(count = args(1), atts = args(0).toAttList)
+      case 257 => {
+        MultiEffect(
+          List(
+            UnlockOrbs(),
+            OrbChangeFullBoard(
+              List(
+                Attribute.FIRE,
+                Attribute.WATER,
+                Attribute.WOOD,
+                Attribute.LIGHT,
+                Attribute.DARK,
+                Attribute.HEART
+              )
+            ),
+            ShowAPath()
+          )
+        )
+      }
+      case 258 =>
+        SetDamageCap(
+          cap = args(1),
+          slots = CardSlot.fromBitFlag(args(2)),
+          turns = args(0)
+        )
       // 8p effects
       case 1000 => {
         // println(s"args: $args")

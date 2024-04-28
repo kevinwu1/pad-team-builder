@@ -1,26 +1,26 @@
 package padTeamBuilder.skills.effects.active
 
+import padTeamBuilder.model.*
 import padTeamBuilder.model.Board.BoardPositionExtensions.countPositions
 import padTeamBuilder.model.Board.BoardPositions
-import padTeamBuilder.model._
 import padTeamBuilder.skills.ActiveSkill
 import padTeamBuilder.util.SkillEffectFieldType
 import padTeamBuilder.util.Util
 
-import scala.compiletime._
+import scala.compiletime.*
 import scala.deriving.*
 //is this a monoid?
 
 sealed trait SkillEffectGeneric extends Product {
   def <=(that: SkillEffectGeneric): Boolean = SkillEffect.leq(this, that)
-  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric
-  def getFieldTypes: List[SkillEffectFieldType]
+  def withNewField(fieldName: String, newValue: Any): SkillEffectGeneric = ???
+  def getFieldTypes: List[SkillEffectFieldType] = ???
   def canMatch(that: SkillEffectGeneric): Boolean =
     this.getClass == that.getClass
 }
 
 sealed trait SkillEffect(str: String) extends SkillEffectGeneric {
-  def and(other: SkillEffect): SkillEffect = {
+  infix def and(other: SkillEffect): SkillEffect = {
     (this, other) match {
       case (_, NoEffect()) => this
       case (NoEffect(), _) => other
@@ -119,7 +119,7 @@ object SkillEffect {
         e1 match {
           case _: Double => e1.asInstanceOf[Double] <= e2.asInstanceOf[Double]
           case _: List[_] =>
-            e1.asInstanceOf[List[_]].diff(e2.asInstanceOf[List[_]]).isEmpty
+            e1.asInstanceOf[List[?]].diff(e2.asInstanceOf[List[?]]).isEmpty
           case _: Attribute =>
             e1.asInstanceOf[Attribute] == e2.asInstanceOf[Attribute]
             || e1.asInstanceOf[Attribute] == Attribute.NONE
@@ -1819,6 +1819,88 @@ case class VoidVoid(turns: Int)
       case "turns" => this.copy(turns = newValue.asInstanceOf[Int])
     }
 }
+
+case class SetDamageCap(cap: Int, slots: List[CardSlot], turns: Int)
+    extends SkillEffect(
+      s"Set damage cap to ${cap / 10.0}B for ${slots.mkString(", ")} for $turns turns. "
+    ) {}
+
+case class SetSelfDamageCap(cap: Int, turns: Int)
+    extends SkillEffect(
+      s"Set self damage cap to ${cap / 10.0}B for $turns turns. "
+    )
+
+case class BoardExpand7x6(turns: Int)
+    extends SkillEffect(s"7x6 board for $turns turns. ")
+
+case class SelfCloud(width: Int, height: Int, turns: Int)
+    extends SkillEffect(
+      s"Create a ${width}x${height} cloud for ${turns} turns. "
+    )
+
+case class SelfTapeColumn(column: Int, turns: Int)
+    extends SkillEffect(
+      s"Create a tape in column ${column} for ${turns} turns. "
+    )
+
+case class ChangeTheWorldDamageCapComboComboConditional(
+    seconds: Int,
+    comboMinimum: Int,
+    cap: Int
+) extends SkillEffect(
+      s"Move orbs freely for ${seconds} seconds, if ${comboMinimum}+ combos reached, set damage cap to ${cap / 10.0}B"
+    )
+case class ChangeTheWorldDamageCapComboColorConditional(
+    seconds: Int,
+    colors: Int,
+    cap: Int
+) extends SkillEffect(
+      s"Move orbs freely for ${seconds} seconds, if ${colors}+ attributes matched, set damage cap to ${cap / 10.0}B"
+    )
+
+case class DelayedActivation(delay: Int, effect: SkillEffect) //TODO:
+    extends SkillEffect(
+      s"${delay} turn delay: [\n${effect.toString}\n]"
+    )
+
+case class CustomSpinner(
+    numberOfSpinners: Int,
+    atts: List[Attribute],
+    turns: Int
+) extends SkillEffect(
+      s"Creates ${numberOfSpinners} ${atts.mkString("-")} spinners for $turns turns. "
+    )
+
+case class ShowAPath() extends SkillEffect("Shows a path for 5 combos. ")
+
+case class SkyfallThorns(
+    chance: Int,
+    atts: List[Attribute],
+    turns: Int
+) extends SkillEffect(
+      s"${chance}% chance for ${atts.mkString("-")} to skyfall with thorns for $turns turns. "
+    )
+
+case class OnlyUsableWhen(count: Int, atts: List[Attribute])
+    extends ConditionalComponent
+    with SkillEffect(
+      s"Only usable when $count+ ${atts.mkString(", ")} on the board: "
+    )
+
+case class ActiveSkillVanishes()
+    extends ConditionalComponent
+    with SkillEffect(
+      s"Skill vanishes when used. "
+    )
+case class SelfBlind(orbs: Int, turns: Int)
+    extends SkillEffect(
+      s"Blinds $orbs orbs for $turns turns. "
+    )
+
+case class SkyfallForesight(turns: Int)
+    extends SkillEffect(
+      s"Skyfall foresight for $turns turns. "
+    )
 
 case class TimeReducedForTop2(args: List[Int])
     extends SkillEffect(

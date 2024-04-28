@@ -1,17 +1,17 @@
 package padTeamBuilder.main
 
-import padTeamBuilder.json._
-import padTeamBuilder.model._
+import padTeamBuilder.json.*
+import padTeamBuilder.model.*
 import padTeamBuilder.skills.ActiveSkill
 import padTeamBuilder.skills.LeaderSkill
-import padTeamBuilder.skills.effects._
-import padTeamBuilder.skills.effects.active._
+import padTeamBuilder.skills.effects.*
+import padTeamBuilder.skills.effects.active.*
 import padTeamBuilder.skills.effects.leader.LSEffectNone
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 
 import java.io.PrintStream
-import scala.compiletime._
+import scala.compiletime.*
 import scala.deriving.*
 import scala.io.Source
 import scala.util.Random
@@ -31,13 +31,16 @@ object DataReader {
     val skillData = readSkillData(skillDataFile)
     println(skillData.length)
     println("carddata length: " + cardData.size)
-    testLSParsing3(cardData, skillData)
+    // testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
   }
+
   def createParsedPickledCards() = {
     println(s"Current dir: ${System.getProperty("user.dir")}")
-    val cardDataFile = "download_card_data.json"
-    val skillDataFile = "download_skill_data.json"
+    val cardDataFile =
+      "PADDashFormation/monsters-info/official-API/en-card.json"
+    val skillDataFile =
+      "PADDashFormation/monsters-info/official-API/en-skill.json"
     val cardData = readCardData(cardDataFile)
     val skillData = readSkillData(skillDataFile)
     println(skillData.length)
@@ -72,13 +75,15 @@ object DataReader {
 
   def createParsedCards() = {
     println(s"Current dir: ${System.getProperty("user.dir")}")
-    val cardDataFile = "download_card_data.json"
-    val skillDataFile = "download_skill_data.json"
+    val cardDataFile =
+      "PADDashFormation/monsters-info/official-API/en-card.json"
+    val skillDataFile =
+      "PADDashFormation/monsters-info/official-API/en-skill.json"
     val cardData = readCardData(cardDataFile)
     val skillData = readSkillData(skillDataFile)
     println(skillData.length)
     println("carddata length: " + cardData.size)
-    testLSParsing3(cardData, skillData)
+    // testLSParsing3(cardData, skillData)
     val cards = parseAllCardsFromJsonCardData(cardData, skillData)
 
     val (normalCards, altCards) = cards.partition(_.id < 20000)
@@ -103,7 +108,11 @@ object DataReader {
       skillData: Vector[JsonSkillData]
   ): Vector[Card] = {
     cardData.map(jcd => {
-      Card.cardFromJsonCardData(jcd, skillData, cardData)
+      val r = Card.cardFromJsonCardData(jcd, skillData, cardData)
+      if (r.id == 1630) {
+        println(r.leaderSkill)
+      }
+      r
     })
   }
 
@@ -212,7 +221,7 @@ object DataReader {
   }
 
   def readCardData(path: String): Vector[JsonCardData] = {
-    val cardDataStr = Source.fromFile("../" + path).mkString
+    val cardDataStr = Source.fromFile(path).mkString
     val json: JsValue = Json.parse(cardDataStr)
     val cards = (json \ "card")
       .as[JsArray]
@@ -224,7 +233,7 @@ object DataReader {
   }
 
   def readSkillData(path: String): Vector[JsonSkillData] = {
-    val cardDataStr = Source.fromFile("../" + path).mkString
+    val cardDataStr = Source.fromFile(path).mkString
     val json: JsValue = Json.parse(cardDataStr)
     val skills = (json \ "skill")
       .as[JsArray]

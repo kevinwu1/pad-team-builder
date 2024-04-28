@@ -1,8 +1,9 @@
 package padTeamBuilder.skills
 
-import padTeamBuilder.skills.effects.leader._
-import padTeamBuilder.model._
+import padTeamBuilder.model.*
 import padTeamBuilder.skills.effects.active.ShieldAttribute
+import padTeamBuilder.skills.effects.leader.*
+import padTeamBuilder.util.Util.toSlots
 
 case class LeaderSkill(name: String, effect: LSEffect) {}
 val NO_LS = LeaderSkill("None", LSEffectNone())
@@ -687,7 +688,19 @@ object LeaderSkill {
       case 138 => {
         args
           .map(jsdId =>
+            // try {
             effectsFromJson(skillData(jsdId), skillData, cardData).effect
+          // } catch {
+          // case e: NotImplementedError =>
+          //   println(s"jsid: ${jsdId}")
+          //   println(s"args: $args")
+          //   println(
+          //     s"args2: ${args.map(skillData).map(x => x.id + "->" + x.internalEffectId)}"
+          //   )
+          //   println("desc: ")
+          //   println(jsd.desc)
+          //   ???
+          // }
           )
           .reduceRight(_ and _)
       }
@@ -937,7 +950,9 @@ object LeaderSkill {
       case 175 => {
         if (args(1) != 0 || args(2) != 0) {
           println("multiple collabs in collab boost?")
-          ???
+          println(args)
+          // ???
+          LSUnknown(s"collab boost - ${args}")
         } else {
           getStatPayoffs(hp = args(3), atk = args(4), rcv = args(5))
             .map(LSComponent(ConditionCollab(Collab.from(args(0))), _))
@@ -1251,13 +1266,28 @@ object LeaderSkill {
           )
           .reduce(_ and _)
       }
+      case 245 => {
+        val rarity = args(0)
+        val slots = args(1).toSlots
+        val hp = args(3)
+        val atk = args(4)
+        val rcv = args(5)
+        val condition = rarity match {
+          case -2 => ConditionSlotsSameRarity(slots)
+          case -1 => ConditionSlotsDifferentRarity(slots)
+          case r  => ConditionSlotsRarity(slots, r)
+        }
+        getStatPayoffs(hp, atk, rcv)
+          .map(payoff => LSComponent(condition, payoff))
+          .reduce(_ and _)
+      }
       case n => {
         println()
         println(s"!!!!!!!!!!!!!!LS id $n not implemented.")
         println(s"args: $args")
         println("desc: ")
         println(jsd.desc)
-        ???
+        LSUnknown(s"${jsd.id}(${jsd.args.mkString(",")}): " + jsd.desc)
       }
     }
     LeaderSkill(jsd.name, effect)

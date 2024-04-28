@@ -1,11 +1,11 @@
 package padTeamBuilder.json
 
-import padTeamBuilder.model._
-import padTeamBuilder.skills._
-import padTeamBuilder.skills.effects.active._
-import padTeamBuilder.skills.effects.leader._
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
+import padTeamBuilder.model.*
+import padTeamBuilder.skills.*
+import padTeamBuilder.skills.effects.active.*
+import padTeamBuilder.skills.effects.leader.*
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 
 object JsonParsing {
 
@@ -42,283 +42,302 @@ object JsonParsing {
   implicit val collabReads: Reads[Collab] =
     makeEnumReads[Collab](Collab.fromOrdinal)
 
-  implicit val formatNoEffect: Format[NoEffect] = Json.format[NoEffect]
-  implicit val formatMultiEffect: Format[MultiEffect] =
-    Json.format[MultiEffect]
-    // unreachable case showed up when i added ConditionalComponentTyped
-  implicit val conditionalComponentFormat: Format[ConditionalComponent] =
-    Json.format[ConditionalComponent]
-  implicit val formatEvolvingEffect: Format[EvolvingEffect] =
-    Json.format[EvolvingEffect]
-  implicit val formatConditionalEffect: Format[ConditionalEffect] =
-    Json.format[ConditionalEffect]
-  implicit val formatChangeTheWorld: Format[ChangeTheWorld] =
-    Json.format[ChangeTheWorld]
-  implicit val formatCounterAttackSkill: Format[CounterAttackSkill] =
-    Json.format[CounterAttackSkill]
-  implicit val formatSuicide: Format[Suicide] =
-    Json.format[Suicide]
-  implicit val formatDefenseBreak: Format[DefenseBreak] =
-    Json.format[DefenseBreak]
-  implicit val formatDelay: Format[Delay] = Json.format[Delay]
-  implicit val formatEnhanceOrbs: Format[EnhanceOrbs] = Json.format[EnhanceOrbs]
-  implicit val formatGravityFalse: Format[GravityFalse] =
-    Json.format[GravityFalse]
-  implicit val formatGravityTrue: Format[GravityTrue] = Json.format[GravityTrue]
-  implicit val formatHealFlat: Format[HealFlat] = Json.format[HealFlat]
-  implicit val formatHealMultiplier: Format[HealMultiplier] =
-    Json.format[HealMultiplier]
-  implicit val formatHealPercentMax: Format[HealPercentMax] =
-    Json.format[HealPercentMax]
-  implicit val formatHealScalingByAwakening: Format[HealScalingByAwakening] =
-    Json.format[HealScalingByAwakening]
-  implicit val formatHealByTeamRCV: Format[HealByTeamRCV] =
-    Json.format[HealByTeamRCV]
-  implicit val formatHealPerTurn: Format[HealPerTurn] = Json.format[HealPerTurn]
-  implicit val formatIncreaseSkyfall: Format[IncreaseSkyfall] =
-    Json.format[IncreaseSkyfall]
-  implicit val formatMassAttack: Format[MassAttack] = Json.format[MassAttack]
-  implicit val formatOrbChangeAtoB: Format[OrbChangeAtoB] =
-    Json.format[OrbChangeAtoB]
-  implicit val formatOrbChangeFullBoard: Format[OrbChangeFullBoard] =
-    Json.format[OrbChangeFullBoard]
-  implicit val formatOrbChangeColumn: Format[OrbChangeColumn] =
-    Json.format[OrbChangeColumn]
-  implicit val formatOrbChangeColumnRandom: Format[OrbChangeColumnRandom] =
-    Json.format[OrbChangeColumnRandom]
-  implicit val formatOrbChangeRow: Format[OrbChangeRow] =
-    Json.format[OrbChangeRow]
-  implicit val formatOrbChangeRandomSpawn: Format[OrbChangeRandomSpawn] =
-    Json.format[OrbChangeRandomSpawn]
-  implicit val formatPoison: Format[Poison] = Json.format[Poison]
-  implicit val formatRefresh: Format[Refresh] = Json.format[Refresh]
-  implicit val formatRCVBoostMult: Format[RCVBoostMult] =
-    Json.format[RCVBoostMult]
-  implicit val formatRCVBoostByAwakening: Format[RCVBoostByAwakening] =
-    Json.format[RCVBoostByAwakening]
-  implicit val formatRCVBoostByAttributeAndType
-      : Format[RCVBoostByAttributeAndType] =
-    Json.format[RCVBoostByAttributeAndType]
-  implicit val formatShieldAll: Format[ShieldAll] = Json.format[ShieldAll]
-  implicit val formatShieldAttribute: Format[ShieldAttribute] =
-    Json.format[ShieldAttribute]
-  implicit val formatShieldScalingByAwakening
-      : Format[ShieldScalingByAwakening] = Json.format[ShieldScalingByAwakening]
-  implicit val formatSpikeAttribute: Format[SpikeAttribute] =
-    Json.format[SpikeAttribute]
-  implicit val formatSpikeType: Format[SpikeType] = Json.format[SpikeType]
-  implicit val formatSpikeScalingByAwakening: Format[SpikeScalingByAwakening] =
-    Json.format[SpikeScalingByAwakening]
-  implicit val formatSpikeScalingByAttributeAndType
-      : Format[SpikeScalingByAttributeAndType] =
-    Json.format[SpikeScalingByAttributeAndType]
-  implicit val formatSpikeSlots: Format[SpikeSlots] = Json.format[SpikeSlots]
-  implicit val formatTransformGeneric: Format[TransformGeneric] =
-    Json.format[TransformGeneric]
-  implicit val formatTransformFixed: Format[TransformFixed] =
-    Json.format[TransformFixed]
-  implicit val formatTransformRandom: Format[TransformRandom] =
-    Json.format[TransformRandom]
-  implicit val formatLeadSwap: Format[LeadSwapThisCard] =
-    Json.format[LeadSwapThisCard]
-  implicit val formatLeadSwapRightMost: Format[LeadSwapRightMost] =
-    Json.format[LeadSwapRightMost]
-  implicit val formatAwokenBindClear: Format[AwokenBindClear] =
-    Json.format[AwokenBindClear]
-  implicit val formatBindClear: Format[BindClear] = Json.format[BindClear]
-  implicit val formatRandom: Format[Random] = Json.format[Random]
-  implicit val formatTimeExtendFlat: Format[TimeExtendFlat] =
-    Json.format[TimeExtendFlat]
-  implicit val formatTimeExtendMult: Format[TimeExtendMult] =
-    Json.format[TimeExtendMult]
-  implicit val formatAttributeChange: Format[AttributeChangeSelf] =
-    Json.format[AttributeChangeSelf]
-  implicit val formatHasteFixed: Format[HasteFixed] = Json.format[HasteFixed]
-  implicit val formatHasteRandom: Format[HasteRandom] = Json.format[HasteRandom]
-  implicit val formatLockOrbs: Format[LockOrbs] = Json.format[LockOrbs]
-  implicit val formatAttributeChangeEnemyPermanent
-      : Format[AttributeChangeEnemyPermanent] =
-    Json.format[AttributeChangeEnemyPermanent]
-  implicit val formatAttributeChangeEnemyTemporary
-      : Format[AttributeChangeEnemyTemporary] =
-    Json.format[AttributeChangeEnemyTemporary]
-  implicit val formatOrbChangeMultiTarget: Format[OrbChangeMultiTarget] =
-    Json.format[OrbChangeMultiTarget]
-  implicit val formatAddCombosSkill: Format[AddCombosSkill] =
-    Json.format[AddCombosSkill]
-  implicit val formatVoidDamageAbsorb: Format[VoidDamageAbsorb] =
-    Json.format[VoidDamageAbsorb]
-  implicit val formatVoidAttributeAbsorb: Format[VoidAttributeAbsorb] =
-    Json.format[VoidAttributeAbsorb]
-  implicit val formatVoidVoid: Format[VoidVoid] = Json.format[VoidVoid]
-  implicit val formatOrbChangePattern: Format[OrbChangePattern] =
-    Json.format[OrbChangePattern]
-  implicit val formatEnhancedSkyfall: Format[EnhancedSkyfall] =
-    Json.format[EnhancedSkyfall]
-  implicit val formatOrbTrace: Format[OrbTrace] = Json.format[OrbTrace]
-  implicit val formatAllyDelay: Format[AllyDelay] = Json.format[AllyDelay]
-  implicit val formatAllyDelayRange: Format[AllyDelayRange] =
-    Json.format[AllyDelayRange]
-  implicit val formatUnlockOrbs: Format[UnlockOrbs] = Json.format[UnlockOrbs]
-  implicit val formatUnmatchableClear: Format[UnmatchableClear] =
-    Json.format[UnmatchableClear]
-  implicit val formatNoSkyfallSkill: Format[NoSkyfallSkill] =
-    Json.format[NoSkyfallSkill]
-  implicit val formatConditionalComponentHP: Format[ConditionalComponentHP] =
-    Json.format[ConditionalComponentHP]
-  implicit val formatConditionalComponentFloor
-      : Format[ConditionalComponentFloor] =
-    Json.format[ConditionalComponentFloor]
-  implicit val formatSpinnerRandom: Format[SpinnerRandom] =
-    Json.format[SpinnerRandom]
-  implicit val formatSpinnerFixed: Format[SpinnerFixed] =
-    Json.format[SpinnerFixed]
-  implicit val formatLockedSkyfall: Format[LockedSkyfall] =
-    Json.format[LockedSkyfall]
-  implicit val formatUnableToUseSkills: Format[UnableToUseSkills] =
-    Json.format[UnableToUseSkills]
-  implicit val formatSelfUnmatchable: Format[SelfUnmatchable] =
-    Json.format[SelfUnmatchable]
-  implicit val formatNailOrbSkyfall: Format[NailOrbSkyfall] =
-    Json.format[NailOrbSkyfall]
-  implicit val formatMaxHPMult: Format[MaxHPMult] = Json.format[MaxHPMult]
-  implicit val formatImmediateDamage: Format[ImmediateDamage] =
-    Json.format[ImmediateDamage]
-  implicit val formatDFixed: Format[DFixed] = Json.format[DFixed]
-  implicit val formatDMultiplier: Format[DMultiplier] = Json.format[DMultiplier]
-  implicit val formatDRange: Format[DRange] = Json.format[DRange]
-  implicit val formatDGrudge: Format[DGrudge] = Json.format[DGrudge]
-  implicit val formatDTeamAtkMult: Format[DTeamAtkMult] =
-    Json.format[DTeamAtkMult]
-  implicit val formatDTeamHpMult: Format[DTeamHpMult] = Json.format[DTeamHpMult]
-  implicit val formatDAttribute: Format[DAttribute] = Json.format[DAttribute]
-  implicit val formatDTrue: Format[DTrue] = Json.format[DTrue]
-  implicit val formatDInherit: Format[DInherit] = Json.format[DInherit]
-  implicit val formatDSingle: Format[DSingle] = Json.format[DSingle]
-  implicit val formatDAll: Format[DAll] = Json.format[DAll]
-  implicit val formatDAttributeTarget: Format[DAttributeTarget] =
-    Json.format[DAttributeTarget]
-  implicit val formatTimeReducedForTop2: Format[TimeReducedForTop2] =
-    Json.format[TimeReducedForTop2]
+//   implicit val formatNoEffect: Format[NoEffect] = Json.format[NoEffect]
+//   implicit val formatMultiEffect: Format[MultiEffect] =
+//     Json.format[MultiEffect]
+//     // unreachable case showed up when i added ConditionalComponentTyped
+//   implicit val conditionalComponentFormat: Format[ConditionalComponent] =
+//     Json.format[ConditionalComponent]
+//   implicit val formatEvolvingEffect: Format[EvolvingEffect] =
+//     Json.format[EvolvingEffect]
+//   implicit val formatConditionalEffect: Format[ConditionalEffect] =
+//     Json.format[ConditionalEffect]
+//   implicit val formatChangeTheWorld: Format[ChangeTheWorld] =
+//     Json.format[ChangeTheWorld]
+//   implicit val formatCounterAttackSkill: Format[CounterAttackSkill] =
+//     Json.format[CounterAttackSkill]
+//   implicit val formatSuicide: Format[Suicide] =
+//     Json.format[Suicide]
+//   implicit val formatDefenseBreak: Format[DefenseBreak] =
+//     Json.format[DefenseBreak]
+//   implicit val formatDelay: Format[Delay] = Json.format[Delay]
+//   implicit val formatEnhanceOrbs: Format[EnhanceOrbs] = Json.format[EnhanceOrbs]
+//   implicit val formatGravityFalse: Format[GravityFalse] =
+//     Json.format[GravityFalse]
+//   implicit val formatGravityTrue: Format[GravityTrue] = Json.format[GravityTrue]
+//   implicit val formatHealFlat: Format[HealFlat] = Json.format[HealFlat]
+//   implicit val formatHealMultiplier: Format[HealMultiplier] =
+//     Json.format[HealMultiplier]
+//   implicit val formatHealPercentMax: Format[HealPercentMax] =
+//     Json.format[HealPercentMax]
+//   implicit val formatHealScalingByAwakening: Format[HealScalingByAwakening] =
+//     Json.format[HealScalingByAwakening]
+//   implicit val formatHealByTeamRCV: Format[HealByTeamRCV] =
+//     Json.format[HealByTeamRCV]
+//   implicit val formatHealPerTurn: Format[HealPerTurn] = Json.format[HealPerTurn]
+//   implicit val formatIncreaseSkyfall: Format[IncreaseSkyfall] =
+//     Json.format[IncreaseSkyfall]
+//   implicit val formatMassAttack: Format[MassAttack] = Json.format[MassAttack]
+//   implicit val formatOrbChangeAtoB: Format[OrbChangeAtoB] =
+//     Json.format[OrbChangeAtoB]
+//   implicit val formatOrbChangeFullBoard: Format[OrbChangeFullBoard] =
+//     Json.format[OrbChangeFullBoard]
+//   implicit val formatOrbChangeColumn: Format[OrbChangeColumn] =
+//     Json.format[OrbChangeColumn]
+//   implicit val formatOrbChangeColumnRandom: Format[OrbChangeColumnRandom] =
+//     Json.format[OrbChangeColumnRandom]
+//   implicit val formatOrbChangeRow: Format[OrbChangeRow] =
+//     Json.format[OrbChangeRow]
+//   implicit val formatOrbChangeRandomSpawn: Format[OrbChangeRandomSpawn] =
+//     Json.format[OrbChangeRandomSpawn]
+//   implicit val formatPoison: Format[Poison] = Json.format[Poison]
+//   implicit val formatRefresh: Format[Refresh] = Json.format[Refresh]
+//   implicit val formatRCVBoostMult: Format[RCVBoostMult] =
+//     Json.format[RCVBoostMult]
+//   implicit val formatRCVBoostByAwakening: Format[RCVBoostByAwakening] =
+//     Json.format[RCVBoostByAwakening]
+//   implicit val formatRCVBoostByAttributeAndType
+//       : Format[RCVBoostByAttributeAndType] =
+//     Json.format[RCVBoostByAttributeAndType]
+//   implicit val formatShieldAll: Format[ShieldAll] = Json.format[ShieldAll]
+//   implicit val formatShieldAttribute: Format[ShieldAttribute] =
+//     Json.format[ShieldAttribute]
+//   implicit val formatShieldScalingByAwakening
+//       : Format[ShieldScalingByAwakening] = Json.format[ShieldScalingByAwakening]
+//   implicit val formatSpikeAttribute: Format[SpikeAttribute] =
+//     Json.format[SpikeAttribute]
+//   implicit val formatSpikeType: Format[SpikeType] = Json.format[SpikeType]
+//   implicit val formatSpikeScalingByAwakening: Format[SpikeScalingByAwakening] =
+//     Json.format[SpikeScalingByAwakening]
+//   implicit val formatSpikeScalingByAttributeAndType
+//       : Format[SpikeScalingByAttributeAndType] =
+//     Json.format[SpikeScalingByAttributeAndType]
+//   implicit val formatSpikeSlots: Format[SpikeSlots] = Json.format[SpikeSlots]
+//   implicit val formatTransformGeneric: Format[TransformGeneric] =
+//     Json.format[TransformGeneric]
+//   implicit val formatTransformFixed: Format[TransformFixed] =
+//     Json.format[TransformFixed]
+//   implicit val formatTransformRandom: Format[TransformRandom] =
+//     Json.format[TransformRandom]
+//   implicit val formatLeadSwap: Format[LeadSwapThisCard] =
+//     Json.format[LeadSwapThisCard]
+//   implicit val formatLeadSwapRightMost: Format[LeadSwapRightMost] =
+//     Json.format[LeadSwapRightMost]
+//   implicit val formatAwokenBindClear: Format[AwokenBindClear] =
+//     Json.format[AwokenBindClear]
+//   implicit val formatBindClear: Format[BindClear] = Json.format[BindClear]
+//   implicit val formatRandom: Format[Random] = Json.format[Random]
+//   implicit val formatTimeExtendFlat: Format[TimeExtendFlat] =
+//     Json.format[TimeExtendFlat]
+//   implicit val formatTimeExtendMult: Format[TimeExtendMult] =
+//     Json.format[TimeExtendMult]
+//   implicit val formatAttributeChange: Format[AttributeChangeSelf] =
+//     Json.format[AttributeChangeSelf]
+//   implicit val formatHasteFixed: Format[HasteFixed] = Json.format[HasteFixed]
+//   implicit val formatHasteRandom: Format[HasteRandom] = Json.format[HasteRandom]
+//   implicit val formatLockOrbs: Format[LockOrbs] = Json.format[LockOrbs]
+//   implicit val formatAttributeChangeEnemyPermanent
+//       : Format[AttributeChangeEnemyPermanent] =
+//     Json.format[AttributeChangeEnemyPermanent]
+//   implicit val formatAttributeChangeEnemyTemporary
+//       : Format[AttributeChangeEnemyTemporary] =
+//     Json.format[AttributeChangeEnemyTemporary]
+//   implicit val formatOrbChangeMultiTarget: Format[OrbChangeMultiTarget] =
+//     Json.format[OrbChangeMultiTarget]
+//   implicit val formatAddCombosSkill: Format[AddCombosSkill] =
+//     Json.format[AddCombosSkill]
+//   implicit val formatVoidDamageAbsorb: Format[VoidDamageAbsorb] =
+//     Json.format[VoidDamageAbsorb]
+//   implicit val formatVoidAttributeAbsorb: Format[VoidAttributeAbsorb] =
+//     Json.format[VoidAttributeAbsorb]
+//   implicit val formatVoidVoid: Format[VoidVoid] = Json.format[VoidVoid]
+//   implicit val formatSetDamageCap: Format[SetDamageCap] =
+//     Json.format[SetDamageCap]
+//   implicit val formatSetSelfDamageCap: Format[SetSelfDamageCap] =
+//     Json.format[SetSelfDamageCap]
+//   implicit val formatBoardExpand7x6: Format[BoardExpand7x6] =
+//     Json.format[BoardExpand7x6]
+//   implicit val formatOrbChangePattern: Format[OrbChangePattern] =
+//     Json.format[OrbChangePattern]
+//   implicit val formatEnhancedSkyfall: Format[EnhancedSkyfall] =
+//     Json.format[EnhancedSkyfall]
+//   implicit val formatOrbTrace: Format[OrbTrace] = Json.format[OrbTrace]
+//   implicit val formatAllyDelay: Format[AllyDelay] = Json.format[AllyDelay]
+//   implicit val formatAllyDelayRange: Format[AllyDelayRange] =
+//     Json.format[AllyDelayRange]
+//   implicit val formatUnlockOrbs: Format[UnlockOrbs] = Json.format[UnlockOrbs]
+//   implicit val formatUnmatchableClear: Format[UnmatchableClear] =
+//     Json.format[UnmatchableClear]
+//   implicit val formatNoSkyfallSkill: Format[NoSkyfallSkill] =
+//     Json.format[NoSkyfallSkill]
+//   implicit val formatConditionalComponentHP: Format[ConditionalComponentHP] =
+//     Json.format[ConditionalComponentHP]
+//   implicit val formatConditionalComponentFloor
+//       : Format[ConditionalComponentFloor] =
+//     Json.format[ConditionalComponentFloor]
+//   implicit val formatSpinnerRandom: Format[SpinnerRandom] =
+//     Json.format[SpinnerRandom]
+//   implicit val formatSpinnerFixed: Format[SpinnerFixed] =
+//     Json.format[SpinnerFixed]
+//   implicit val formatLockedSkyfall: Format[LockedSkyfall] =
+//     Json.format[LockedSkyfall]
+//   implicit val formatUnableToUseSkills: Format[UnableToUseSkills] =
+//     Json.format[UnableToUseSkills]
+//   implicit val formatSelfUnmatchable: Format[SelfUnmatchable] =
+//     Json.format[SelfUnmatchable]
+//   implicit val formatNailOrbSkyfall: Format[NailOrbSkyfall] =
+//     Json.format[NailOrbSkyfall]
+//   implicit val formatMaxHPMult: Format[MaxHPMult] = Json.format[MaxHPMult]
+//   implicit val formatImmediateDamage: Format[ImmediateDamage] =
+//     Json.format[ImmediateDamage]
+//   implicit val formatDFixed: Format[DFixed] = Json.format[DFixed]
+//   implicit val formatDMultiplier: Format[DMultiplier] = Json.format[DMultiplier]
+//   implicit val formatDRange: Format[DRange] = Json.format[DRange]
+//   implicit val formatDGrudge: Format[DGrudge] = Json.format[DGrudge]
+//   implicit val formatDTeamAtkMult: Format[DTeamAtkMult] =
+//     Json.format[DTeamAtkMult]
+//   implicit val formatDTeamHpMult: Format[DTeamHpMult] = Json.format[DTeamHpMult]
+//   implicit val formatDAttribute: Format[DAttribute] = Json.format[DAttribute]
+//   implicit val formatDTrue: Format[DTrue] = Json.format[DTrue]
+//   implicit val formatDInherit: Format[DInherit] = Json.format[DInherit]
+//   implicit val formatDSingle: Format[DSingle] = Json.format[DSingle]
+//   implicit val formatDAll: Format[DAll] = Json.format[DAll]
+//   implicit val formatDAttributeTarget: Format[DAttributeTarget] =
+//     Json.format[DAttributeTarget]
+//   implicit val formatTimeReducedForTop2: Format[TimeReducedForTop2] =
+//     Json.format[TimeReducedForTop2]
 
-  implicit val formatDAmount: Format[DAmount] = Json.format[DAmount]
-  implicit val formatDType: Format[DType] = Json.format[DType]
-  implicit val formatDTarget: Format[DTarget] = Json.format[DTarget]
-  implicit val sef: Format[SkillEffect] = Json.format[SkillEffect]
+//   implicit val formatDAmount: Format[DAmount] = Json.format[DAmount]
+//   implicit val formatDType: Format[DType] = Json.format[DType]
+//   implicit val formatDTarget: Format[DTarget] = Json.format[DTarget]
+//   implicit val sef: Format[SkillEffect] = Json.format[SkillEffect]
 
-  implicit val cardStatsFormat: Format[CardStats] = Json.format[CardStats]
-  implicit val enemySkillFormat: Format[EnemySkill] = Json.format[EnemySkill]
-  implicit val cardEnemySkillsFormat: Format[CardEnemySkills] =
-    Json.format[CardEnemySkills]
-  implicit val cardMiscStatsFormat: Format[CardMiscStats] =
-    Json.format[CardMiscStats]
-  implicit val activeSkillFormat: Format[ActiveSkill] = Json.format[ActiveSkill]
-//leader skills
-  implicit val leaderSkillFormat: Format[LeaderSkill] = Json.format[LeaderSkill]
-  implicit val formatLSEffect: Format[LSEffect] = Json.format[LSEffect]
-  implicit val formatLSCondition: Format[LSCondition] = Json.format[LSCondition]
-  implicit val formatLSPayoff: Format[LSPayoff] = Json.format[LSPayoff]
+//   implicit val cardStatsFormat: Format[CardStats] = Json.format[CardStats]
+//   implicit val enemySkillFormat: Format[EnemySkill] = Json.format[EnemySkill]
+//   implicit val cardEnemySkillsFormat: Format[CardEnemySkills] =
+//     Json.format[CardEnemySkills]
+//   implicit val cardMiscStatsFormat: Format[CardMiscStats] =
+//     Json.format[CardMiscStats]
+//   implicit val activeSkillFormat: Format[ActiveSkill] = Json.format[ActiveSkill]
+// //leader skills
+//   implicit val leaderSkillFormat: Format[LeaderSkill] = Json.format[LeaderSkill]
+//   implicit val formatLSUnknown: Format[LSUnknown] = Json.format[LSUnknown]
+//   implicit val formatLSEffect: Format[LSEffect] = Json.format[LSEffect]
+//   implicit val formatLSCondition: Format[LSCondition] = Json.format[LSCondition]
+//   implicit val formatLSPayoff: Format[LSPayoff] = Json.format[LSPayoff]
 
-  implicit val formatLSPassive: Format[LSPassive] = Json.format[LSPassive]
-  implicit val formatLSComponent: Format[LSComponent] = Json.format[LSComponent]
-  implicit val formatLSComponentInfinite: Format[LSComponentInfinite] =
-    Json.format[LSComponentInfinite]
-  implicit val formatMultiLSEffect: Format[MultiLSEffect] =
-    Json.format[MultiLSEffect]
+//   implicit val formatLSPassive: Format[LSPassive] = Json.format[LSPassive]
+//   implicit val formatLSComponent: Format[LSComponent] = Json.format[LSComponent]
+//   implicit val formatLSComponentInfinite: Format[LSComponentInfinite] =
+//     Json.format[LSComponentInfinite]
+//   implicit val formatMultiLSEffect: Format[MultiLSEffect] =
+//     Json.format[MultiLSEffect]
 
-  implicit val formatLSEffectNone: Format[LSEffectNone] =
-    Json.format[LSEffectNone]
-  implicit val formatDynamicSelectEffect: Format[DynamicSelectEffect] =
-    Json.format[DynamicSelectEffect]
-  implicit val formatLSAttOrTypeScaling: Format[LSAttOrTypeScaling] =
-    Json.format[LSAttOrTypeScaling]
-  implicit val formatLSConditionNone: Format[LSConditionNone] =
-    Json.format[LSConditionNone]
-  implicit val formatLSConditionMulti: Format[LSConditionMulti] =
-    Json.format[LSConditionMulti]
-  implicit val formatConditionAttribute: Format[ConditionAttribute] =
-    Json.format[ConditionAttribute]
-  implicit val formatConditionType: Format[ConditionType] =
-    Json.format[ConditionType]
-  implicit val formatConditionMatchingAnyOrbs
-      : Format[ConditionMatchingAnyOrbs] = Json.format[ConditionMatchingAnyOrbs]
-  implicit val formatConditionHPThreshold: Format[ConditionHPThreshold] =
-    Json.format[ConditionHPThreshold]
-  implicit val formatConditionColorsMatched: Format[ConditionColorsMatched] =
-    Json.format[ConditionColorsMatched]
-  implicit val formatConditionCombos: Format[ConditionCombos] =
-    Json.format[ConditionCombos]
-  implicit val formatConditionCombosExact: Format[ConditionCombosExact] =
-    Json.format[ConditionCombosExact]
-  implicit val formatConditionOrbsLinked: Format[ConditionOrbsLinked] =
-    Json.format[ConditionOrbsLinked]
-  implicit val formatConditionOrbsLinkedExact
-      : Format[ConditionOrbsLinkedExact] = Json.format[ConditionOrbsLinkedExact]
-  implicit val formatConditionCardOnTeam: Format[ConditionCardOnTeam] =
-    Json.format[ConditionCardOnTeam]
-  implicit val formatConditionSkillUsed: Format[ConditionSkillUsed] =
-    Json.format[ConditionSkillUsed]
-  implicit val formatConditionSparkle: Format[ConditionSparkle] =
-    Json.format[ConditionSparkle]
-  implicit val formatConditionCross: Format[ConditionCross] =
-    Json.format[ConditionCross]
-  implicit val formatConditionCollab: Format[ConditionCollab] =
-    Json.format[ConditionCollab]
-  implicit val formatConditionOrbsRemaining: Format[ConditionOrbsRemaining] =
-    Json.format[ConditionOrbsRemaining]
-  implicit val formatConditionLMatched: Format[ConditionLMatched] =
-    Json.format[ConditionLMatched]
-  implicit val formatConditionCoop: Format[ConditionCoop] =
-    Json.format[ConditionCoop]
-  implicit val formatHealed: Format[Healed] = Json.format[Healed]
-  implicit val formatConditionAllPixel: Format[ConditionAllPixel] =
-    Json.format[ConditionAllPixel]
-  implicit val formatConditionAllRevo: Format[ConditionAllRevo] =
-    Json.format[ConditionAllRevo]
-  implicit val formatConditionTeamRarity: Format[ConditionTeamRarity] =
-    Json.format[ConditionTeamRarity]
-  implicit val formatLSPayoffNone: Format[LSPayoffNone] =
-    Json.format[LSPayoffNone]
-  implicit val formatHPBoost: Format[HPBoost] = Json.format[HPBoost]
-  implicit val formatATKBoost: Format[ATKBoost] = Json.format[ATKBoost]
-  implicit val formatRCVBoost: Format[RCVBoost] = Json.format[RCVBoost]
-  implicit val formatShieldElement: Format[ShieldElement] =
-    Json.format[ShieldElement]
-  implicit val formatShieldRegular: Format[ShieldRegular] =
-    Json.format[ShieldRegular]
-  implicit val formatBonusAttackScaling: Format[BonusAttackScaling] =
-    Json.format[BonusAttackScaling]
-  implicit val formatBonusAttackFixed: Format[BonusAttackFixed] =
-    Json.format[BonusAttackFixed]
-  implicit val formatAutoHealScaling: Format[AutoHealScaling] =
-    Json.format[AutoHealScaling]
-  implicit val formatResolve: Format[Resolve] = Json.format[Resolve]
-  implicit val formatPayoffChance: Format[PayoffChance] =
-    Json.format[PayoffChance]
-  implicit val formatDrummingSound: Format[DrummingSound] =
-    Json.format[DrummingSound]
-  implicit val formatDropRateBoost: Format[DropRateBoost] =
-    Json.format[DropRateBoost]
-  implicit val formatCoinBoost: Format[CoinBoost] = Json.format[CoinBoost]
-  implicit val formatCounterAttack: Format[CounterAttack] =
-    Json.format[CounterAttack]
-  implicit val formatTimeExtend: Format[TimeExtend] = Json.format[TimeExtend]
-  implicit val formatRankExpBoost: Format[RankExpBoost] =
-    Json.format[RankExpBoost]
-  implicit val formatNoSkyfall: Format[NoSkyfall] = Json.format[NoSkyfall]
-  implicit val formatBoard7x6: Format[Board7x6] = Json.format[Board7x6]
-  implicit val formatAddCombos: Format[AddCombos] = Json.format[AddCombos]
-  implicit val formatFixedTime: Format[FixedTime] = Json.format[FixedTime]
-  implicit val formatVoidPoisonDamage: Format[VoidPoisonDamage] =
-    Json.format[VoidPoisonDamage]
-  implicit val formatMinimumMatch: Format[MinimumMatch] =
-    Json.format[MinimumMatch]
-  implicit val formatPayoffAwokenBindClear: Format[PayoffAwokenBindClear] =
-    Json.format[PayoffAwokenBindClear]
-  implicit val formatAddAwakening: Format[AddAwakening] =
-    Json.format[AddAwakening]
+//   implicit val formatLSEffectNone: Format[LSEffectNone] =
+//     Json.format[LSEffectNone]
+//   implicit val formatDynamicSelectEffect: Format[DynamicSelectEffect] =
+//     Json.format[DynamicSelectEffect]
+//   implicit val formatLSAttOrTypeScaling: Format[LSAttOrTypeScaling] =
+//     Json.format[LSAttOrTypeScaling]
+//   implicit val formatLSConditionNone: Format[LSConditionNone] =
+//     Json.format[LSConditionNone]
+//   implicit val formatLSConditionMulti: Format[LSConditionMulti] =
+//     Json.format[LSConditionMulti]
+//   implicit val formatConditionAttribute: Format[ConditionAttribute] =
+//     Json.format[ConditionAttribute]
+//   implicit val formatConditionType: Format[ConditionType] =
+//     Json.format[ConditionType]
+//   implicit val formatConditionMatchingAnyOrbs
+//       : Format[ConditionMatchingAnyOrbs] = Json.format[ConditionMatchingAnyOrbs]
+//   implicit val formatConditionHPThreshold: Format[ConditionHPThreshold] =
+//     Json.format[ConditionHPThreshold]
+//   implicit val formatConditionColorsMatched: Format[ConditionColorsMatched] =
+//     Json.format[ConditionColorsMatched]
+//   implicit val formatConditionCombos: Format[ConditionCombos] =
+//     Json.format[ConditionCombos]
+//   implicit val formatConditionCombosExact: Format[ConditionCombosExact] =
+//     Json.format[ConditionCombosExact]
+//   implicit val formatConditionOrbsLinked: Format[ConditionOrbsLinked] =
+//     Json.format[ConditionOrbsLinked]
+//   implicit val formatConditionOrbsLinkedExact
+//       : Format[ConditionOrbsLinkedExact] = Json.format[ConditionOrbsLinkedExact]
+//   implicit val formatConditionCardOnTeam: Format[ConditionCardOnTeam] =
+//     Json.format[ConditionCardOnTeam]
+//   implicit val formatConditionSkillUsed: Format[ConditionSkillUsed] =
+//     Json.format[ConditionSkillUsed]
+//   implicit val formatConditionSparkle: Format[ConditionSparkle] =
+//     Json.format[ConditionSparkle]
+//   implicit val formatConditionCross: Format[ConditionCross] =
+//     Json.format[ConditionCross]
+//   implicit val formatConditionCollab: Format[ConditionCollab] =
+//     Json.format[ConditionCollab]
+//   implicit val formatConditionOrbsRemaining: Format[ConditionOrbsRemaining] =
+//     Json.format[ConditionOrbsRemaining]
+//   implicit val formatConditionLMatched: Format[ConditionLMatched] =
+//     Json.format[ConditionLMatched]
+//   implicit val formatConditionCoop: Format[ConditionCoop] =
+//     Json.format[ConditionCoop]
+//   implicit val formatHealed: Format[Healed] = Json.format[Healed]
+//   implicit val formatConditionAllPixel: Format[ConditionAllPixel] =
+//     Json.format[ConditionAllPixel]
+//   implicit val formatConditionAllRevo: Format[ConditionAllRevo] =
+//     Json.format[ConditionAllRevo]
+//   implicit val formatConditionTeamRarity: Format[ConditionTeamRarity] =
+//     Json.format[ConditionTeamRarity]
+//   implicit val formatConditionSlotsRarity: Format[ConditionSlotsRarity] =
+//     Json.format[ConditionSlotsRarity]
+//   implicit val formatConditionSlotsSameRarity
+//       : Format[ConditionSlotsSameRarity] =
+//     Json.format[ConditionSlotsSameRarity]
+//   implicit val formatConditionSlotsDifferentRarity
+//       : Format[ConditionSlotsDifferentRarity] =
+//     Json.format[ConditionSlotsDifferentRarity]
+//   implicit val formatLSPayoffNone: Format[LSPayoffNone] =
+//     Json.format[LSPayoffNone]
+//   implicit val formatHPBoost: Format[HPBoost] = Json.format[HPBoost]
+//   implicit val formatATKBoost: Format[ATKBoost] = Json.format[ATKBoost]
+//   implicit val formatRCVBoost: Format[RCVBoost] = Json.format[RCVBoost]
+//   implicit val formatShieldElement: Format[ShieldElement] =
+//     Json.format[ShieldElement]
+//   implicit val formatShieldRegular: Format[ShieldRegular] =
+//     Json.format[ShieldRegular]
+//   implicit val formatBonusAttackScaling: Format[BonusAttackScaling] =
+//     Json.format[BonusAttackScaling]
+//   implicit val formatBonusAttackFixed: Format[BonusAttackFixed] =
+//     Json.format[BonusAttackFixed]
+//   implicit val formatAutoHealScaling: Format[AutoHealScaling] =
+//     Json.format[AutoHealScaling]
+//   implicit val formatResolve: Format[Resolve] = Json.format[Resolve]
+//   implicit val formatPayoffChance: Format[PayoffChance] =
+//     Json.format[PayoffChance]
+//   implicit val formatDrummingSound: Format[DrummingSound] =
+//     Json.format[DrummingSound]
+//   implicit val formatDropRateBoost: Format[DropRateBoost] =
+//     Json.format[DropRateBoost]
+//   implicit val formatCoinBoost: Format[CoinBoost] = Json.format[CoinBoost]
+//   implicit val formatCounterAttack: Format[CounterAttack] =
+//     Json.format[CounterAttack]
+//   implicit val formatTimeExtend: Format[TimeExtend] = Json.format[TimeExtend]
+//   implicit val formatRankExpBoost: Format[RankExpBoost] =
+//     Json.format[RankExpBoost]
+//   implicit val formatNoSkyfall: Format[NoSkyfall] = Json.format[NoSkyfall]
+//   implicit val formatBoard7x6: Format[Board7x6] = Json.format[Board7x6]
+//   implicit val formatAddCombos: Format[AddCombos] = Json.format[AddCombos]
+//   implicit val formatFixedTime: Format[FixedTime] = Json.format[FixedTime]
+//   implicit val formatVoidPoisonDamage: Format[VoidPoisonDamage] =
+//     Json.format[VoidPoisonDamage]
+//   implicit val formatMinimumMatch: Format[MinimumMatch] =
+//     Json.format[MinimumMatch]
+//   implicit val formatPayoffAwokenBindClear: Format[PayoffAwokenBindClear] =
+//     Json.format[PayoffAwokenBindClear]
+//   implicit val formatAddAwakening: Format[AddAwakening] =
+//     Json.format[AddAwakening]
 
-  implicit val cardFormat: Format[Card] = Json.format[Card]
+  // implicit val skillEffectWrites: Writes[SkillEffect] = (
+  //   JsPath \ ""
+  // )
+
+  // implicit val cardFormat: Format[Card] = Json.format[Card]
 
   def jsonCardDataFromJson(data: List[JsValue]): JsonCardData = {
     val it = data.iterator
@@ -546,23 +565,27 @@ object JsonParsing {
   }
 
   def cardsToJson(cards: Seq[Card]): String = {
-    Json.toJson(cards).toString
+    // Json.toJson(cards).toString
+    ???
   }
 
   def cardsFromJson(json: String): Vector[Card] = {
-    Json
-      .parse(json)
-      .as[JsArray]
-      .value
-      .map(card => {
-        card.validate[Card] match {
-          case s: JsSuccess[Card] => s.get
-          case e: JsError => {
-            System.err.println(e.errors)
-            ???
-          }
-        }
-      })
-      .toVector
+    // Json
+    //   .parse(json)
+    //   .as[JsArray]
+    //   .value
+    //   .map(card => {
+    //     card.validate[Card] match {
+    //       case s: JsSuccess[Card] => s.get
+    //       case e: JsError => {
+    //         System.err.println(e.errors)
+    //         ???
+    //       }
+    //     }
+    //   })
+    //   .toVector
+    ???
   }
+
+  def main(args: Array[String]): Unit = {}
 }

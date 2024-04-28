@@ -1,15 +1,18 @@
 package padTeamBuilder.util
 
-import scala.compiletime._
-import scala.deriving.*
+import padTeamBuilder.model.Attribute
+import padTeamBuilder.model.Awakening
+import padTeamBuilder.model.CardSlot
 import padTeamBuilder.skills.ActiveSkill
-import padTeamBuilder.model.{Attribute, Awakening}
-import padTeamBuilder.skills.effects.active.SkillEffect
 import padTeamBuilder.skills.effects.active.ConditionalComponent
+import padTeamBuilder.skills.effects.active.SkillEffect
+
+import scala.compiletime.*
+import scala.deriving.*
 
 object Util {
   // https://www.scala-js.org/doc/semantics.html
-  def isIntType(c: Class[_]): Boolean = {
+  def isIntType(c: Class[?]): Boolean = {
     c == classOf[java.lang.Byte] ||
     c == classOf[java.lang.Short] ||
     c == classOf[java.lang.Integer]
@@ -32,7 +35,7 @@ object Util {
 
   def convertAny(
       newValue: String,
-      targetClass: Class[_],
+      targetClass: Class[?],
       seft: SkillEffectFieldType
   ): Any = {
     seft match {
@@ -45,5 +48,10 @@ object Util {
         }
       }
     }
+  }
+
+  extension (i: Int) {
+    def toSlots: List[CardSlot] = CardSlot.fromBitFlag(i)
+    def toAttList: List[Attribute] = Attribute.fromBitFlag(i)
   }
 }

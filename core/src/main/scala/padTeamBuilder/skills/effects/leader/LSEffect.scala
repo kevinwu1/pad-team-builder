@@ -1,11 +1,11 @@
 package padTeamBuilder.skills.effects.leader
 
-import padTeamBuilder.model._
+import padTeamBuilder.model.*
 
 //is this a monoid?
 sealed trait LSEffect(str: String) {
   override def toString = str
-  def and(other: LSEffect): LSEffect = {
+  infix def and(other: LSEffect): LSEffect = {
     (this, other) match {
       case (_, LSEffectNone()) => this
       case (LSEffectNone(), _) => other
@@ -20,6 +20,7 @@ sealed trait LSEffect(str: String) {
     }
   }
 }
+case class LSUnknown(details: String) extends LSEffect(s"unknown - ${details}")
 
 case class LSPassive(payoff: LSPayoff)
     extends LSEffect(payoff.toString.capitalize)
@@ -98,7 +99,7 @@ private def scalingHelper(
 
 sealed trait LSCondition(str: String) {
   override def toString = str
-  def and(other: LSCondition): LSCondition = {
+  infix def and(other: LSCondition): LSCondition = {
     (this, other) match {
       case (_, LSConditionNone()) => this
       case (LSConditionMulti(e1), LSConditionMulti(e2)) =>
@@ -111,6 +112,7 @@ sealed trait LSCondition(str: String) {
         LSConditionMulti(List(this, other))
     }
   }
+
 }
 
 case class LSConditionNone() extends LSCondition("no condition")
@@ -228,6 +230,29 @@ case class ConditionTeamRarity(maxRarity: Int)
       s"total team rarity is maxRarity or less"
     )
 
+case class ConditionSlotsRarity(slots: List[CardSlot], rarity: Int)
+    extends LSCondition({
+      if (slots.size == 4) // all slots
+        s"all cards are rarity $rarity"
+      else
+        s"${slots.mkString(", ")} are rarity $rarity"
+    })
+
+case class ConditionSlotsSameRarity(slots: List[CardSlot])
+    extends LSCondition({
+      if (slots.size == 4) // all slots
+        s"all cards are the same rarity"
+      else
+        s"${slots.mkString(", ")} are the same rarity"
+    })
+
+case class ConditionSlotsDifferentRarity(slots: List[CardSlot])
+    extends LSCondition({
+      if (slots.size == 4) // all slots
+        s"all cards are different rarity"
+      else
+        s"${slots.mkString(", ")} are different rarity"
+    })
 sealed trait LSPayoff(str: String) {
   override def toString = str
 }

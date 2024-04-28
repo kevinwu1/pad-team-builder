@@ -38,3 +38,4 @@ target-json/
 
 #output dir
 static/
+out/
